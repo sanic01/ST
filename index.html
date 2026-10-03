@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klon Guard - Shock Trooper Terminal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Rajdhani & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        shockRed: '#E61C1C',
+                        shockRedBright: '#FF2A2A',
+                        shockRedDark: '#6A0505',
+                        republicDark: '#080A0E',
+                        republicPanel: '#0F131C',
+                        republicBorder: '#232A3B',
+                        republicText: '#C8D1E0'
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080A0E;
+            color: #C8D1E0;
+            font-family: 'Rajdhani', sans-serif;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(230, 28, 28, 0.22), transparent 60%),
+                radial-gradient(circle at 10% 90%, rgba(230, 28, 28, 0.08), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .red-glow {
+            box-shadow: 0 0 25px rgba(230, 28, 28, 0.6), 0 0 5px rgba(255, 42, 42, 0.8);
+        }
+        
+        .red-glow-intense {
+            box-shadow: 0 0 35px rgba(230, 28, 28, 0.8), inset 0 0 15px rgba(230, 28, 28, 0.4);
+        }
+
+        .red-border-glow {
+            border-color: #E61C1C;
+            box-shadow: 0 0 20px rgba(230, 28, 28, 0.4);
+        }
+
+        .text-red-glow {
+            text-shadow: 0 0 12px rgba(230, 28, 28, 0.9), 0 0 25px rgba(230, 28, 28, 0.5);
+        }
+
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: #E61C1C;
+            color: #FFFFFF;
+            box-shadow: 0 0 20px rgba(230, 28, 28, 0.8);
+            border-color: #FF2A2A;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(230, 28, 28, 0.4);
+                border-color: rgba(230, 28, 28, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(230, 28, 28, 0.9);
+                border-color: rgba(255, 42, 42, 1);
+            }
+        }
+
+        .pulse-glow-box {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080A0E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E61C1C;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-shockRed selection:text-white">
+
+    <!-- LOGIN / REGISTRATION SCREEN OVERLAY -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-8 red-glow-intense relative overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-shockRed/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-shockRed rounded-xl mx-auto flex items-center justify-center font-orbitron font-black text-white text-3xl mb-3 red-glow border border-red-400">
+                    ST
+                </div>
+                <h1 class="font-orbitron font-bold text-2xl text-white tracking-widest uppercase">
+                    Klon Guard Terminal
+                </h1>
+                <p class="text-xs text-red-400 uppercase tracking-wider font-semibold text-red-glow mt-1">
+                    Firebase Live-Datenbank Zugriff
+                </p>
+            </div>
+
+            <!-- Login / Register Mode Switcher -->
+            <div class="flex bg-black/60 rounded-lg p-1 border border-republicBorder mb-6">
+                <button type="button" id="toggle-login-btn" onclick="switchAuthMode('login')" class="w-1/2 py-2 text-xs font-orbitron font-bold rounded-md bg-shockRed text-white transition red-glow">
+                    Anmelden
+                </button>
+                <button type="button" id="toggle-register-btn" onclick="switchAuthMode('register')" class="w-1/2 py-2 text-xs font-orbitron font-bold rounded-md text-gray-400 hover:text-white transition">
+                    Registrieren
+                </button>
+            </div>
+
+            <!-- Custom Notification Message Box -->
+            <div id="auth-alert" class="hidden mb-4 p-3 rounded-lg text-xs font-mono text-center border"></div>
+
+            <!-- Login / Register Form -->
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block font-orbitron text-xs uppercase text-gray-400 mb-1">Klon-ID / Trooper Name</label>
+                    <div class="relative">
+                        <i data-lucide="shield" class="absolute left-3 top-3 w-5 h-5 text-gray-500"></i>
+                        <input type="text" id="auth-identifier" required placeholder="z. B. CC-1010 Fox oder CT-5555" class="w-full bg-black/80 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:ring-1 focus:ring-shockRed font-mono">
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">Keine echte E-Mail nötig – gib einfach deine Klon-ID oder deinen Namen ein.</p>
+                </div>
+
+                <div>
+                    <label class="block font-orbitron text-xs uppercase text-gray-400 mb-1">Sicherheitsschlüssel (Passwort)</label>
+                    <div class="relative">
+                        <i data-lucide="key" class="absolute left-3 top-3 w-5 h-5 text-gray-500"></i>
+                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-black/80 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:outline-none focus:ring-1 focus:ring-shockRed font-mono">
+                    </div>
+                </div>
+
+                <!-- Initial Level Selector on Registration -->
+                <div id="register-level-box" class="hidden">
+                    <label class="block font-orbitron text-xs uppercase text-red-400 mb-1">Anfängliches Sicherheitslevel</label>
+                    <select id="auth-initial-level" class="w-full bg-black/80 border border-shockRed rounded-lg py-2.5 px-3 text-white text-sm font-mono focus:outline-none focus:ring-1 focus:ring-shockRed">
+                        <option value="4" selected>Stufe 4 (Commander - Vollzugriff)</option>
+                        <option value="3">Stufe 3 (Offizier / Roster-Verwaltung)</option>
+                        <option value="2">Stufe 2 (NCO / Ausbilder / Gesetze)</option>
+                        <option value="1">Stufe 1 (Trooper / Basiszugriff)</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold py-3 rounded-lg uppercase tracking-wider transition-all red-glow flex items-center justify-center gap-2">
+                    <i data-lucide="lock"></i> Autorisieren &amp; Einloggen
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION CONTAINER -->
+    <div id="app-screen" class="hidden min-h-screen flex flex-col justify-between">
+        
+        <!-- TOP HEADER / NAV BAR -->
+        <header class="bg-republicPanel/90 backdrop-blur border-b-2 border-shockRed/40 sticky top-0 z-40 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20">
+                    <!-- Branding -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 bg-shockRed rounded-lg flex items-center justify-center font-orbitron font-black text-white text-2xl shadow-lg red-glow border border-red-400">
+                            ST
+                        </div>
+                        <div>
+                            <h1 class="font-orbitron font-bold text-xl text-white tracking-wider uppercase">
+                                Shock Trooper
+                            </h1>
+                            <p class="text-xs text-red-400/90 tracking-widest uppercase font-semibold text-red-glow">Klon Guard</p>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <nav class="hidden md:flex space-x-1 lg:space-x-2">
+                        <button onclick="switchTab('home')" id="btn-home" class="tab-btn active px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2 hover:border-shockRed/50">
+                            <i data-lucide="shield" class="w-4 h-4"></i> Hauptquartier
+                        </button>
+                        <button onclick="switchTab('akten')" id="btn-akten" class="tab-btn text-gray-300 hover:bg-republicBorder hover:text-white px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2">
+                            <i data-lucide="folder-search" class="w-4 h-4"></i> Akten
+                        </button>
+                        <button onclick="switchTab('regeln')" id="btn-regeln" class="tab-btn text-gray-300 hover:bg-republicBorder hover:text-white px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2">
+                            <span id="lock-icon-regeln"></span> <i data-lucide="book-open" class="w-4 h-4"></i> Regeln
+                        </button>
+                        <button onclick="switchTab('ausbildung')" id="btn-ausbildung" class="tab-btn text-gray-300 hover:bg-republicBorder hover:text-white px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2">
+                            <span id="lock-icon-ausbildung"></span> <i data-lucide="award" class="w-4 h-4"></i> Ausbildung
+                        </button>
+                        <button onclick="switchTab('raenge')" id="btn-raenge" class="tab-btn text-gray-300 hover:bg-republicBorder hover:text-white px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2">
+                            <span id="lock-icon-raenge"></span> <i data-lucide="users" class="w-4 h-4"></i> Ränge &amp; Roster
+                        </button>
+                        <button onclick="switchTab('admin')" id="btn-admin" class="tab-btn hidden text-gray-300 hover:bg-republicBorder hover:text-white px-3.5 py-2 rounded-lg font-orbitron font-semibold text-xs uppercase border border-transparent flex items-center gap-2">
+                            <i data-lucide="settings" class="w-4 h-4 text-shockRed text-red-glow"></i> Admin
+                        </button>
+                    </nav>
+
+                    <!-- User Profile & Hover Dropdown Menu -->
+                    <div class="relative group cursor-pointer py-2 shrink-0">
+                        <div class="flex items-center gap-2.5 bg-black/60 hover:bg-shockRed/20 border border-shockRed/40 hover:border-shockRed px-3 py-1.5 rounded-lg transition red-glow max-w-[180px] sm:max-w-[220px]">
+                            <div class="flex flex-col items-end min-w-0 overflow-hidden w-full">
+                                <span id="user-display-name" class="font-orbitron font-bold text-sm text-white truncate w-full text-right whitespace-nowrap" title="CT-0000">CT-0000</span>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="w-2 h-2 rounded-full bg-shockRedBright animate-ping"></span>
+                                    <span id="user-display-level" class="text-xs font-mono font-bold text-red-400 text-red-glow whitespace-nowrap">STUFE 1</span>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-red-400 shrink-0 transition-transform group-hover:rotate-180"></i>
+                        </div>
+
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 top-full mt-1 w-64 bg-republicPanel border-2 border-shockRed rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 red-glow overflow-hidden">
+                            <div class="p-2 space-y-1">
+                                <div class="px-2 py-1.5 border-b border-republicBorder">
+                                    <p class="text-[10px] text-gray-400 font-mono uppercase">Angemeldet als</p>
+                                    <p id="user-display-email" class="text-xs text-white font-mono truncate">klon@guard.de</p>
+                                </div>
+                                
+                                <!-- Direct Level 4 Unlock Button -->
+                                <button onclick="promoteSelfToLevel4()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-orbitron font-bold text-white bg-shockRed hover:bg-shockRedBright rounded-lg transition red-glow">
+                                    <i data-lucide="shield-check" class="w-4 h-4 text-white"></i> Stufe 4 (Commander) Freischalten
+                                </button>
+
+                                <button onclick="handleLogout()" class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-orbitron font-bold text-red-400 hover:text-white hover:bg-shockRed/30 rounded-lg transition text-left">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i> Abmelden
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT CONTAINERS -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+            <!-- TAB 1: STARTSEITE / HAUPTQUARTIER -->
+            <div id="tab-home" class="tab-content block space-y-8">
+                
+                <!-- HERO LOGO AREA -->
+                <div class="relative bg-republicPanel border-2 border-shockRed/60 rounded-2xl p-8 md:p-12 text-center overflow-hidden red-border-glow pulse-glow-box">
+                    <div class="absolute -right-10 -top-10 w-96 h-96 bg-shockRed/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-10 -bottom-10 w-96 h-96 bg-shockRed/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="w-48 h-48 md:w-64 md:h-64 mb-6 rounded-2xl border-2 border-dashed border-shockRed bg-black/80 flex flex-col items-center justify-center p-4 hover:scale-105 transition-all duration-300 group cursor-pointer red-glow">
+                            <i data-lucide="shield-alert" class="w-16 h-16 text-shockRed group-hover:text-shockRedBright transition-colors mb-2 drop-shadow-[0_0_10px_rgba(230,28,28,0.8)]"></i>
+                            <span class="font-orbitron font-bold text-sm text-white uppercase text-center tracking-wide">Hier Shock Trooper Logo einfügen</span>
+                            <span class="text-xs text-red-300/70 mt-1">Empfohlen: Transparentes PNG (500x500px)</span>
+                        </div>
+
+                        <h2 class="text-3xl md:text-5xl font-orbitron font-black text-white tracking-wider uppercase mb-3 drop-shadow-md">
+                            Klon Guard <span class="text-shockRed text-red-glow">Shock Trooper</span>
+                        </h2>
+                        <p class="text-lg text-gray-300 max-w-2xl font-medium leading-relaxed">
+                            Sicherheit, Disziplin und Ordnung im Namen des Obersten Kanzlers und des Galaktischen Senats. Willkommen im offiziellen Informations- und Akten-Netzwerk der Klonschocktruppen.
+                        </p>
+
+                        <div class="mt-8 flex flex-wrap gap-4 justify-center">
+                            <button onclick="promoteSelfToLevel4()" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-8 py-3.5 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-lg red-glow-intense hover:scale-105 cursor-pointer">
+                                <i data-lucide="shield-check"></i> Commander Stufe 4 Aktivieren
+                            </button>
+                            <a href="#" onclick="switchTab('ausbildung')" class="bg-republicPanel hover:bg-republicBorder text-white font-orbitron font-bold px-8 py-3.5 rounded-lg flex items-center gap-2 transition border border-shockRed/60 hover:border-shockRed red-glow">
+                                <i data-lucide="award"></i> Rekrutierung / Tryout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRID INFO CARDS -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 hover:border-shockRed transition-all duration-300 hover:shadow-[0_0_20px_rgba(230,28,28,0.3)] group">
+                        <div class="w-12 h-12 bg-shockRed/20 text-shockRed rounded-lg flex items-center justify-center mb-4 border border-shockRed/40 group-hover:bg-shockRed group-hover:text-white transition-all red-glow">
+                            <i data-lucide="server" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-xl text-white mb-2 group-hover:text-shockRed transition-colors">GMod Server-Verbindung</h3>
+                        <p class="text-sm text-gray-400 mb-4">Melde dich direkt im republikanischen Hauptquartier auf dem Garrys Mod StarWars RP Server an.</p>
+                        <div class="bg-black/60 p-3 rounded font-mono text-xs text-red-400 flex justify-between items-center border border-shockRed/30">
+                            <span class="tracking-widest">connect 123.456.789:27015</span>
+                            <button onclick="copyToClipboard('connect 123.456.789:27015')" class="hover:text-white transition" title="IP Kopieren">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 hover:border-shockRed transition-all duration-300 hover:shadow-[0_0_20px_rgba(230,28,28,0.3)] group">
+                        <div class="w-12 h-12 bg-shockRed/20 text-shockRed rounded-lg flex items-center justify-center mb-4 border border-shockRed/40 group-hover:bg-shockRed group-hover:text-white transition-all red-glow">
+                            <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-xl text-white mb-2 group-hover:text-shockRed transition-colors">Hauptaufgaben</h3>
+                        <ul class="text-sm text-gray-300 space-y-2 list-disc list-inside">
+                            <li>Schutz des Kanzlers &amp; des Senats</li>
+                            <li>Verwaltung des Republik-Gefängnisses</li>
+                            <li>Patrouillen &amp; Personenkontrollen</li>
+                            <li>Durchsetzung des Militär-Gesetzbuches</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 hover:border-shockRed transition-all duration-300 hover:shadow-[0_0_20px_rgba(230,28,28,0.3)] group">
+                        <div class="w-12 h-12 bg-shockRed/20 text-shockRed rounded-lg flex items-center justify-center mb-4 border border-shockRed/40 group-hover:bg-shockRed group-hover:text-white transition-all red-glow">
+                            <i data-lucide="user-check" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-xl text-white mb-2 group-hover:text-shockRed transition-colors">Einheitsführung</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center border-b border-republicBorder/60 pb-2">
+                                <span class="text-gray-400">Commander:</span>
+                                <span class="font-semibold text-white">CC-1010 "Fox"</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-republicBorder/60 pb-2">
+                                <span class="text-gray-400">Vice Commanders:</span>
+                                <span class="font-semibold text-white">CT-0408 "Thorn" / "Stone"</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Direktkontakt:</span>
+                                <span class="font-semibold text-red-400 text-red-glow">Officer der Guard</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANNOUNCEMENTS SECTION (Firebase Live) -->
+                <div class="bg-republicPanel border-2 border-shockRed/40 rounded-xl p-6 red-border-glow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-orbitron font-bold text-2xl text-white flex items-center gap-3">
+                            <i data-lucide="bell" class="text-shockRed text-red-glow animate-bounce"></i> 
+                            Aktuelle Befehle &amp; Ankündigungen
+                        </h3>
+                        <span class="text-xs font-mono text-red-400 border border-shockRed/40 px-2.5 py-1 rounded bg-black/50">FIREBASE LIVE</span>
+                    </div>
+
+                    <div id="announcements-container" class="space-y-4">
+                        <p class="text-sm text-gray-500 font-mono italic">Lade Live-Befehle aus der Cloud...</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: AKTEN-SYSTEM -->
+            <div id="tab-akten" class="tab-content hidden space-y-6">
+                <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 red-border-glow">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
+                                <i data-lucide="folder-search" class="text-shockRed text-red-glow"></i> Klon Guard Akten-Datenbank
+                            </h2>
+                            <p class="text-gray-400 text-sm mt-1">Gefängnis- und Strafakten der Republik (Echtzeit-Synchronisiert).</p>
+                        </div>
+
+                        <div id="akten-edit-controls" class="hidden">
+                            <button onclick="toggleAktenModal(true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
+                                <i data-lucide="file-plus" class="w-4 h-4"></i> Neue Akte Anlegen
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Akten Search Bar -->
+                    <div class="relative mb-6">
+                        <i data-lucide="search" class="absolute left-3.5 top-3 w-5 h-5 text-gray-500"></i>
+                        <input type="text" id="akten-search-input" onkeyup="filterAktenList()" placeholder="Nach Name, Klon-ID oder Vergehen suchen..." class="w-full bg-black/70 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none font-mono">
+                    </div>
+
+                    <!-- Akten Grid Display -->
+                    <div id="akten-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <p class="text-sm text-gray-500 font-mono italic col-span-full">Lade Akten-Datenbank...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: REGELN & GESETZE -->
+            <div id="tab-regeln" class="tab-content hidden space-y-6">
+                <div id="access-denied-regeln" class="hidden bg-red-950/80 border-2 border-shockRed p-8 rounded-xl text-center red-glow">
+                    <i data-lucide="lock" class="w-16 h-16 text-shockRed mx-auto mb-3"></i>
+                    <h3 class="font-orbitron font-bold text-2xl text-white uppercase">Zugriff verweigert</h3>
+                    <p class="text-red-300 mt-2 mb-4">Diese Unterlagen erfordern **Sicherheitsstufe 2 (NCO / Unteroffizier)** oder höher.</p>
+                    <button onclick="promoteSelfToLevel4()" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-6 py-2 rounded text-xs uppercase transition red-glow">
+                        Auf Stufe 4 Upgraden
+                    </button>
+                </div>
+
+                <div id="access-granted-regeln" class="bg-republicPanel border border-republicBorder rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
+                                <i data-lucide="book-open" class="text-shockRed text-red-glow"></i> Gesetzbuch &amp; Verhaltenskodex
+                            </h2>
+                            <p class="text-gray-400 text-sm mt-1">Klon Guard Richtlinien. Nur für autorisierte NCOs und Officers.</p>
+                        </div>
+                        <span class="text-xs font-mono text-red-400 border border-shockRed/40 px-2.5 py-1 rounded bg-black/50">STUFE 2 FREIGABE</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-black/50 p-5 rounded-lg border border-republicBorder hover:border-shockRed/60 transition red-border-glow">
+                            <h3 class="font-bold text-shockRed font-orbitron text-lg mb-1 flex items-center gap-2">
+                                <i data-lucide="alert-octagon" class="w-5 h-5"></i> §1 Befehlskette &amp; Loyalität
+                            </h3>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                Den Weisungen des Obersten Kanzlers, der Senatswache sowie Höherrangigen der Shock Trooper ist unverzüglich Folge zu leisten. Befehlsverweigerung führt zum sofortigen Kriegsgericht.
+                            </p>
+                        </div>
+
+                        <div class="bg-black/50 p-5 rounded-lg border border-republicBorder hover:border-shockRed/60 transition red-border-glow">
+                            <h3 class="font-bold text-shockRed font-orbitron text-lg mb-1 flex items-center gap-2">
+                                <i data-lucide="lock" class="w-5 h-5"></i> §2 Festnahmen &amp; Haftzeiten
+                            </h3>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                Inhaftierungen dürfen nur unter Angabe des spezifischen Paragraphen aus dem republikanischen Strafenkatalog durchgeführt werden. Vor jeder Inhaftierung ist der Tatverdächtige zu durchsuchen und zu entwaffnen.
+                            </p>
+                        </div>
+
+                        <div class="bg-black/50 p-5 rounded-lg border border-republicBorder hover:border-shockRed/60 transition red-border-glow">
+                            <h3 class="font-bold text-shockRed font-orbitron text-lg mb-1 flex items-center gap-2">
+                                <i data-lucide="zap" class="w-5 h-5"></i> §3 Waffengebrauch &amp; Taser
+                            </h3>
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                Der Einsatz des Betäubungstasers gilt als primäres Mittel zur Deeskalation. Tödliche Gewalt ist nur bei direkter Bedrohung für Senatoren, Zivilisten oder Brüder der Republik gestattet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: AUSBILDUNG -->
+            <div id="tab-ausbildung" class="tab-content hidden space-y-6">
+                <div id="access-denied-ausbildung" class="hidden bg-red-950/80 border-2 border-shockRed p-8 rounded-xl text-center red-glow">
+                    <i data-lucide="lock" class="w-16 h-16 text-shockRed mx-auto mb-3"></i>
+                    <h3 class="font-orbitron font-bold text-2xl text-white uppercase">Zugriff verweigert</h3>
+                    <p class="text-red-300 mt-2 mb-4">Diese Unterlagen erfordern **Sicherheitsstufe 2 (Ausbilder / NCO)** oder höher.</p>
+                    <button onclick="promoteSelfToLevel4()" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-6 py-2 rounded text-xs uppercase transition red-glow">
+                        Auf Stufe 4 Upgraden
+                    </button>
+                </div>
+
+                <div id="access-granted-ausbildung" class="bg-republicPanel border border-republicBorder rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
+                                <i data-lucide="award" class="text-shockRed text-red-glow"></i> Ausbildungsleitfaden
+                            </h2>
+                            <p class="text-gray-400 text-sm mt-1">Ablauf zur Beförderung vom Rekruten (PVT) zum Vollwertigen Trooper der Guard.</p>
+                        </div>
+                        <span class="text-xs font-mono text-red-400 border border-shockRed/40 px-2.5 py-1 rounded bg-black/50">STUFE 2 FREIGABE</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-black/50 p-6 rounded-lg border border-republicBorder hover:border-shockRed/60 transition red-border-glow">
+                            <h3 class="font-bold text-white font-orbitron mb-4 text-xl flex items-center gap-3">
+                                <span class="w-8 h-8 bg-shockRed text-white rounded-lg flex items-center justify-center font-bold text-sm red-glow">1</span> 
+                                Theoretische Prüfung
+                            </h3>
+                            <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                                <li>Abfrage des Republikanischen Bußgeldkatalogs</li>
+                                <li>Funkcodes &amp; 10-Codes der Klon Guard</li>
+                                <li>Rechte &amp; Pflichten beim Personenschutz von VIPs</li>
+                                <li>Sicherheitszonen des Stützpunkts</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-black/50 p-6 rounded-lg border border-republicBorder hover:border-shockRed/60 transition red-border-glow">
+                            <h3 class="font-bold text-white font-orbitron mb-4 text-xl flex items-center gap-3">
+                                <span class="w-8 h-8 bg-shockRed text-white rounded-lg flex items-center justify-center font-bold text-sm red-glow">2</span> 
+                                Praktischer Einsatz
+                            </h3>
+                            <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                                <li>Fesseln, Durchsuchen &amp; Entwaffnen von Zielpersonen</li>
+                                <li>Nutzung des Betäubungsmodus / Tasers</li>
+                                <li>Formationslauf &amp; VIP-Eskortierung</li>
+                                <li>Gefängnis-Sicherung &amp; Aufstandsbekämpfung</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: RÄNGE & ROSTER -->
+            <div id="tab-raenge" class="tab-content hidden space-y-6">
+                <div id="access-denied-raenge" class="hidden bg-red-950/80 border-2 border-shockRed p-8 rounded-xl text-center red-glow">
+                    <i data-lucide="lock" class="w-16 h-16 text-shockRed mx-auto mb-3"></i>
+                    <h3 class="font-orbitron font-bold text-2xl text-white uppercase">Zugriff verweigert</h3>
+                    <p class="text-red-300 mt-2 mb-4">Das Einheits-Roster erfordert **Sicherheitsstufe 3 (Offizier / Officer)** oder höher.</p>
+                    <button onclick="promoteSelfToLevel4()" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-6 py-2 rounded text-xs uppercase transition red-glow">
+                        Auf Stufe 4 Upgraden
+                    </button>
+                </div>
+
+                <div id="access-granted-raenge" class="bg-republicPanel border border-republicBorder rounded-xl p-6 red-border-glow">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
+                                <i data-lucide="users" class="text-shockRed text-red-glow"></i> Rangstruktur &amp; Aktivitäts-Roster
+                            </h2>
+                            <p class="text-gray-400 text-sm mt-1">Verwaltung der aktiven Klonsoldaten und Offiziere.</p>
+                        </div>
+
+                        <div id="roster-edit-controls" class="hidden">
+                            <button onclick="toggleRosterModal(true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Trooper Hinzufügen
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b-2 border-shockRed/50 font-orbitron text-red-400 text-sm uppercase bg-black/60">
+                                    <th class="p-4">Rang</th>
+                                    <th class="p-4">Name / ID</th>
+                                    <th class="p-4">Spezialisierung / Rolle</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right roster-action-col hidden">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roster-table-body" class="divide-y divide-republicBorder text-sm text-gray-300">
+                                <tr><td colspan="5" class="p-4 text-gray-500 font-mono italic">Lade Roster-Daten aus der Cloud...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: ADMIN-ZENTRALE -->
+            <div id="tab-admin" class="tab-content hidden space-y-6">
+                <div class="bg-republicPanel border-2 border-shockRed rounded-xl p-6 red-glow-intense">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
+                                <i data-lucide="settings" class="text-shockRed text-red-glow"></i> Commander Admin-Zentrale
+                            </h2>
+                            <p class="text-gray-400 text-sm mt-1">Exklusive Steuerung für Commander (Sicherheitsstufe 4).</p>
+                        </div>
+                        <span class="text-xs font-mono text-red-400 border border-shockRed px-3 py-1 rounded bg-red-950 font-bold red-glow">COMMANDER VOLLZUGRIFF</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <!-- Create New Announcement -->
+                        <div class="bg-black/60 p-6 rounded-xl border border-republicBorder">
+                            <h3 class="font-orbitron font-bold text-xl text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="text-shockRed"></i> Neue Ankündigung Veröffentlichen
+                            </h3>
+                            <form onsubmit="handleCreateAnnouncement(event)" class="space-y-4">
+                                <div>
+                                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Titel der Anweisung</label>
+                                    <input type="text" id="ann-title" required placeholder="z. B. Defcon-Erhöhung auf Ebene 2" class="w-full bg-republicDark border border-republicBorder rounded p-2.5 text-white text-sm focus:border-shockRed focus:outline-none font-mono">
+                                </div>
+                                <div>
+                                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Absender / Offizier</label>
+                                    <input type="text" id="ann-sender" required placeholder="CC-1010 Commander Fox" class="w-full bg-republicDark border border-republicBorder rounded p-2.5 text-white text-sm focus:border-shockRed focus:outline-none font-mono">
+                                </div>
+                                <div>
+                                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Inhalt / Befehlstext</label>
+                                    <textarea id="ann-content" required rows="3" placeholder="Detaillierte Anweisungen an die Truppen..." class="w-full bg-republicDark border border-republicBorder rounded p-2.5 text-white text-sm focus:border-shockRed focus:outline-none font-mono"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold py-2.5 rounded text-sm uppercase red-glow">
+                                    Ankündigung Live Senden
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- User Security Level Management -->
+                        <div class="bg-black/60 p-6 rounded-xl border border-republicBorder">
+                            <h3 class="font-orbitron font-bold text-xl text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="shield-alert" class="text-shockRed"></i> Mitglied-Sicherheitsstufen
+                            </h3>
+                            <div class="space-y-3 max-h-[350px] overflow-y-auto pr-2" id="user-management-list">
+                                <p class="text-xs text-gray-500 font-mono italic">Lade registrierte Mitglieder...</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-republicPanel border-t border-shockRed/30 py-6 mt-12">
+            <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400">
+                <p class="font-orbitron text-gray-300">Klon Guard — Klon-Schocktruppen der Großen Armee der Republik</p>
+                <p class="mt-1 text-gray-500">Fan-Projekt für Garrys Mod SWRP.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ADD AKTE MODAL -->
+    <div id="akten-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-orbitron font-bold text-xl text-white flex items-center gap-2">
+                    <i data-lucide="file-text" class="text-shockRed"></i> Neue Akte Anlegen
+                </h3>
+                <button onclick="toggleAktenModal(false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form onsubmit="handleAddAkte(event)" class="space-y-4">
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Klon / Zivilist</label>
+                    <input type="text" id="akte-target" required placeholder="z. B. CT-5555 Fives oder Kopfgeldjäger" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                </div>
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Vergehen / Vorfall</label>
+                    <input type="text" id="akte-reason" required placeholder="z. B. §2 Unerlaubter Waffenbesitz" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Haftzeit / Strafe</label>
+                        <input type="text" id="akte-penalty" required placeholder="z. B. 10 Minuten / Bußgeld" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                    </div>
+                    <div>
+                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Aktivitäts-Status</label>
+                        <select id="akte-status" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                            <option value="INHAFTIERT">INHAFTIERT</option>
+                            <option value="GESUCHT">GESUCHT</option>
+                            <option value="ENTLASSEN">ENTLASSEN</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Details &amp; Vermerk</label>
+                    <textarea id="akte-notes" rows="3" placeholder="Zusätzliche Bemerkungen..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="toggleAktenModal(false)" class="px-4 py-2 bg-gray-800 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Akte Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD ROSTER MEMBER MODAL -->
+    <div id="roster-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-orbitron font-bold text-xl text-white">Neuen Trooper Eintragen</h3>
+                <button onclick="toggleRosterModal(false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form onsubmit="handleAddRosterMember(event)" class="space-y-4">
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Rang</label>
+                    <input type="text" id="roster-rank" required placeholder="z. B. Sergeant" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                </div>
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Name / ID</label>
+                    <input type="text" id="roster-name" required placeholder="z. B. CT-5555 'Fives'" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                </div>
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Spezialisierung</label>
+                    <input type="text" id="roster-role" required placeholder="z. B. Schweres Geschütz / K9" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                </div>
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Status</label>
+                    <select id="roster-status" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                        <option value="IM DIENST">IM DIENST</option>
+                        <option value="AKTIV">AKTIV</option>
+                        <option value="ABWESEND">ABWESEND</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="toggleRosterModal(false)" class="px-4 py-2 bg-gray-800 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Eintragen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE MODULE SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            addDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Deines exakten Firebase Konfiguration!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAp3If3RjAzS4gG8sfKiwhnBgCOmXsGiEo",
+            authDomain: "klon-guard.firebaseapp.com",
+            projectId: "klon-guard",
+            storageBucket: "klon-guard.firebasestorage.app",
+            messagingSenderId: "8951878701",
+            appId: "1:8951878701:web:c0a44b5a0d98eca23514a4",
+            measurementId: "G-HJR08W0QGF"
+        };
+
+        // Firebase Initialisieren
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Firestore Pfad-Hilfsvariable gemäß Regelwerk
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'klon-guard-swrp';
+
+        // Globale App-Zustände
+        let currentUserData = null;
+        let authMode = 'login'; // 'login' oder 'register'
+        let cachedAkten = [];
+
+        // Wandelt Klon-IDs / Namen ohne @ in ein virtuelles E-Mail-Format für Firebase um
+        function identifierToEmail(identifier) {
+            const trimmed = identifier.trim();
+            if (trimmed.includes('@')) {
+                return trimmed.toLowerCase();
+            }
+            const clean = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            return `${clean || 'trooper'}@klon-guard.terminal`;
+        }
+
+        // Listener für Auth-Statusänderung
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Benutzerdaten aus Firestore laden
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid);
+                try {
+                    const snap = await getDoc(userDocRef);
+                    if (snap.exists()) {
+                        currentUserData = snap.data();
+                    } else {
+                        // Standard-Profil mit Stufe 4 anlegen
+                        currentUserData = {
+                            uid: user.uid,
+                            email: user.email,
+                            klonId: user.email.split('@')[0],
+                            level: 4
+                        };
+                        await setDoc(userDocRef, currentUserData);
+                    }
+                } catch (err) {
+                    console.error("Fehler beim Laden des Benutzerprofils:", err);
+                    currentUserData = { uid: user.uid, email: user.email, klonId: user.email, level: 4 };
+                }
+
+                // UI auf angemeldeten Zustand umschalten
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+
+                const displayName = currentUserData.klonId || user.email.split('@')[0];
+                const nameEl = document.getElementById('user-display-name');
+                nameEl.innerText = displayName;
+                nameEl.title = displayName;
+                document.getElementById('user-display-email').innerText = displayName;
+                document.getElementById('user-display-level').innerText = `SICHERHEITSSTUFE ${currentUserData.level}`;
+
+                updateSecurityClearances();
+                startFirestoreRealtimeListeners();
+            } else {
+                currentUserData = null;
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+            lucide.createIcons();
+        });
+
+        // Auth Modus Wechseln (Login / Registrieren)
+        window.switchAuthMode = function(mode) {
+            authMode = mode;
+            const loginBtn = document.getElementById('toggle-login-btn');
+            const regBtn = document.getElementById('toggle-register-btn');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const regLevelBox = document.getElementById('register-level-box');
+
+            if (mode === 'register') {
+                regBtn.className = 'w-1/2 py-2 text-xs font-orbitron font-bold rounded-md bg-shockRed text-white transition red-glow';
+                loginBtn.className = 'w-1/2 py-2 text-xs font-orbitron font-bold rounded-md text-gray-400 hover:text-white transition';
+                submitBtn.innerHTML = '<i data-lucide="user-plus"></i> Konto Registrieren';
+                regLevelBox.classList.remove('hidden');
+            } else {
+                loginBtn.className = 'w-1/2 py-2 text-xs font-orbitron font-bold rounded-md bg-shockRed text-white transition red-glow';
+                regBtn.className = 'w-1/2 py-2 text-xs font-orbitron font-bold rounded-md text-gray-400 hover:text-white transition';
+                submitBtn.innerHTML = '<i data-lucide="lock"></i> Autorisieren &amp; Einloggen';
+                regLevelBox.classList.add('hidden');
+            }
+            lucide.createIcons();
+        };
+
+        // Direkte Selbstbeförderung auf Sicherheitsstufe 4 (Commander)
+        window.promoteSelfToLevel4 = async function() {
+            if (!auth.currentUser) return;
+
+            const targetLevel = 4;
+            const uid = auth.currentUser.uid;
+            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', uid);
+
+            try {
+                await setDoc(userDocRef, {
+                    level: targetLevel
+                }, { merge: true });
+
+                if (currentUserData) {
+                    currentUserData.level = targetLevel;
+                }
+
+                document.getElementById('user-display-level').innerText = `SICHERHEITSSTUFE ${targetLevel}`;
+                updateSecurityClearances();
+                
+                // Falls Admin-Liste geladen ist
+                if (document.getElementById('tab-admin')) {
+                    startFirestoreRealtimeListeners();
+                }
+
+                alert("Sicherheitsstufe 4 (Commander) wurde erfolgreich freigeschaltet!");
+            } catch (err) {
+                console.error("Fehler beim Erhöhen des Sicherheitslevels:", err);
+            }
+        };
+
+        // Login & Registrieren Absenden
+        window.handleAuthSubmit = async function(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('auth-identifier').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const alertBox = document.getElementById('auth-alert');
+
+            alertBox.classList.add('hidden');
+
+            if (!identifier) {
+                showAuthAlert("Bitte gib deine Klon-ID / deinen Namen ein!", "red");
+                return;
+            }
+
+            const firebaseEmail = identifierToEmail(identifier);
+
+            try {
+                if (authMode === 'register') {
+                    const selectedLevel = parseInt(document.getElementById('auth-initial-level').value) || 4;
+                    const userCredential = await createUserWithEmailAndPassword(auth, firebaseEmail, password);
+                    const user = userCredential.user;
+
+                    // Profil direkt in Firestore mit gewünschtem Level abspeichern
+                    const profileData = {
+                        uid: user.uid,
+                        email: firebaseEmail,
+                        klonId: identifier,
+                        level: selectedLevel
+                    };
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid), profileData);
+                    showAuthAlert("Konto mit Sicherheitsstufe " + selectedLevel + " registriert! Lade Terminal...", "green");
+                } else {
+                    await signInWithEmailAndPassword(auth, firebaseEmail, password);
+                }
+            } catch (error) {
+                showAuthAlert("Fehler: " + translateFirebaseError(error.code), "red");
+            }
+        };
+
+        window.handleLogout = function() {
+            signOut(auth);
+        };
+
+        function showAuthAlert(msg, type) {
+            const box = document.getElementById('auth-alert');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+            if (type === "green") {
+                box.className = "mb-4 p-3 bg-green-950/80 border border-green-500 rounded-lg text-xs text-green-300 font-mono text-center";
+            } else {
+                box.className = "mb-4 p-3 bg-red-950/80 border border-shockRed rounded-lg text-xs text-red-300 font-mono text-center red-glow";
+            }
+        }
+
+        function translateFirebaseError(code) {
+            switch(code) {
+                case 'auth/invalid-email': return 'Ungültige E-Mail-Adresse.';
+                case 'auth/user-not-found': return 'Kein Klon-Konto unter dieser E-Mail gefunden.';
+                case 'auth/wrong-password': return 'Ungültiger Sicherheitsschlüssel / Passwort.';
+                case 'auth/email-already-in-use': return 'Diese E-Mail-Adresse ist bereits registriert.';
+                case 'auth/weak-password': return 'Das Passwort muss mindestens 6 Zeichen lang sein.';
+                default: return 'Zugriff verweigert (' + code + ')';
+            }
+        }
+
+        function updateSecurityClearances() {
+            if (!currentUserData) return;
+            const level = currentUserData.level;
+
+            // Admin Tab Button (Level 4)
+            const adminBtn = document.getElementById('btn-admin');
+            if (level === 4) {
+                adminBtn.classList.remove('hidden');
+            } else {
+                adminBtn.classList.add('hidden');
+            }
+
+            // Lock Icons on Nav
+            document.getElementById('lock-icon-regeln').innerHTML = level < 2 ? '<i data-lucide="lock" class="w-3.5 h-3.5 text-shockRed inline"></i>' : '';
+            document.getElementById('lock-icon-ausbildung').innerHTML = level < 2 ? '<i data-lucide="lock" class="w-3.5 h-3.5 text-shockRed inline"></i>' : '';
+            document.getElementById('lock-icon-raenge').innerHTML = level < 3 ? '<i data-lucide="lock" class="w-3.5 h-3.5 text-shockRed inline"></i>' : '';
+
+            // Section Access Views
+            toggleAccessSection('regeln', level >= 2);
+            toggleAccessSection('ausbildung', level >= 2);
+            toggleAccessSection('raenge', level >= 3);
+
+            // Controls for Akten & Roster
+            const aktenControls = document.getElementById('akten-edit-controls');
+            if (level >= 2) {
+                aktenControls.classList.remove('hidden');
+            } else {
+                aktenControls.classList.add('hidden');
+            }
+
+            const rosterControls = document.getElementById('roster-edit-controls');
+            if (level >= 3) {
+                rosterControls.classList.remove('hidden');
+            } else {
+                rosterControls.classList.add('hidden');
+            }
+        }
+
+        function toggleAccessSection(sectionName, isGranted) {
+            const deniedBox = document.getElementById(`access-denied-${sectionName}`);
+            const grantedBox = document.getElementById(`access-granted-${sectionName}`);
+            if (isGranted) {
+                deniedBox.classList.add('hidden');
+                grantedBox.classList.remove('hidden');
+            } else {
+                deniedBox.classList.remove('hidden');
+                grantedBox.classList.add('hidden');
+            }
+        }
+
+        function startFirestoreRealtimeListeners() {
+            // 1. Ankündigungen Listener
+            const annCol = collection(db, 'artifacts', appId, 'public', 'data', 'announcements');
+            onSnapshot(annCol, (snapshot) => {
+                const announcements = [];
+                snapshot.forEach(doc => {
+                    announcements.push({ id: doc.id, ...doc.data() });
+                });
+                renderAnnouncements(announcements);
+            }, (err) => console.error("Ankündigungen Error:", err));
+
+            // 2. Akten Listener
+            const aktenCol = collection(db, 'artifacts', appId, 'public', 'data', 'akten');
+            onSnapshot(aktenCol, (snapshot) => {
+                cachedAkten = [];
+                snapshot.forEach(doc => {
+                    cachedAkten.push({ id: doc.id, ...doc.data() });
+                });
+                renderAkten(cachedAkten);
+            }, (err) => console.error("Akten Error:", err));
+
+            // 3. Roster Listener
+            const rosterCol = collection(db, 'artifacts', appId, 'public', 'data', 'roster');
+            onSnapshot(rosterCol, (snapshot) => {
+                const rosterList = [];
+                snapshot.forEach(doc => {
+                    rosterList.push({ id: doc.id, ...doc.data() });
+                });
+                renderRoster(rosterList);
+            }, (err) => console.error("Roster Error:", err));
+
+            // 4. Admin User List Listener (Level 4)
+            if (currentUserData.level === 4) {
+                const usersCol = collection(db, 'artifacts', appId, 'public', 'data', 'user_profiles');
+                onSnapshot(usersCol, (snapshot) => {
+                    const userList = [];
+                    snapshot.forEach(doc => {
+                        userList.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderAdminUserList(userList);
+                }, (err) => console.error("Users Error:", err));
+            }
+        }
+
+        function renderAnnouncements(announcements) {
+            const container = document.getElementById('announcements-container');
+            container.innerHTML = '';
+
+            if (announcements.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 font-mono italic">Keine aktuellen Befehle vorhanden.</p>';
+                return;
+            }
+
+            announcements.forEach((ann, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-black/60 border-l-4 border-shockRed p-4 rounded-r-lg red-glow relative group";
+
+                let deleteBtnHtml = '';
+                if (currentUserData && currentUserData.level === 4) {
+                    deleteBtnHtml = `<button onclick="deleteAnnouncement('${ann.id}')" class="text-red-400 hover:text-white text-xs font-mono bg-red-950/60 p-1.5 rounded border border-shockRed/50">Löschen</button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start text-xs text-red-300 mb-1 font-mono">
+                        <span>VON: ${ann.sender ? ann.sender.toUpperCase() : 'COMMANDER'}</span>
+                        <div class="flex items-center gap-2">
+                            <span>Befehl #${index + 1}</span>
+                            ${deleteBtnHtml}
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-white text-base font-orbitron">${ann.title}</h4>
+                    <p class="text-sm text-gray-300 mt-1">${ann.content}</p>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        window.handleCreateAnnouncement = async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('ann-title').value;
+            const sender = document.getElementById('ann-sender').value;
+            const content = document.getElementById('ann-content').value;
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'announcements'), {
+                    title, sender, content, timestamp: Date.now()
+                });
+                e.target.reset();
+                switchTab('home');
+            } catch (err) {
+                console.error("Fehler beim Erstellen der Ankündigung:", err);
+            }
+        };
+
+        window.deleteAnnouncement = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'announcements', id));
+            } catch (err) {
+                console.error("Fehler beim Löschen der Ankündigung:", err);
+            }
+        };
+
+        function renderAkten(aktenList) {
+            const container = document.getElementById('akten-list-container');
+            container.innerHTML = '';
+
+            if (aktenList.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 font-mono italic col-span-full">Keine Akten in der Datenbank vorhanden.</p>';
+                return;
+            }
+
+            aktenList.forEach(akte => {
+                const card = document.createElement('div');
+                card.className = "bg-black/60 border border-republicBorder hover:border-shockRed p-5 rounded-xl transition red-border-glow flex flex-col justify-between";
+
+                let statusColor = "bg-red-950 text-red-400 border-shockRed";
+                if (akte.status === "GESUCHT") statusColor = "bg-amber-950 text-amber-400 border-amber-500";
+                if (akte.status === "ENTLASSEN") statusColor = "bg-emerald-950 text-emerald-400 border-emerald-500";
+
+                let deleteBtn = '';
+                if (currentUserData && currentUserData.level >= 3) {
+                    deleteBtn = `<button onclick="deleteAkte('${akte.id}')" class="text-gray-500 hover:text-shockRed text-xs transition" title="Akte löschen"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <span class="text-[10px] font-mono text-gray-400 uppercase block">Akte:</span>
+                                <h3 class="font-orbitron font-bold text-lg text-white">${akte.target}</h3>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="border px-2 py-0.5 rounded text-[10px] font-mono font-bold ${statusColor}">${akte.status}</span>
+                                ${deleteBtn}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-xs font-mono mb-4">
+                            <div>
+                                <span class="text-red-400">Vergehen:</span>
+                                <p class="text-gray-200 font-sans text-sm">${akte.reason}</p>
+                            </div>
+                            <div>
+                                <span class="text-red-400">Strafe / Haftzeit:</span>
+                                <p class="text-gray-300">${akte.penalty}</p>
+                            </div>
+                            ${akte.notes ? `<div><span class="text-gray-500">Vermerk:</span><p class="text-gray-400 italic">${akte.notes}</p></div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-republicBorder/60 flex justify-between items-center text-[10px] font-mono text-gray-500">
+                        <span>ERSTELLT VON: ${akte.author || 'Officer'}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        window.filterAktenList = function() {
+            const query = document.getElementById('akten-search-input').value.toLowerCase();
+            const filtered = cachedAkten.filter(a => 
+                (a.target && a.target.toLowerCase().includes(query)) ||
+                (a.reason && a.reason.toLowerCase().includes(query)) ||
+                (a.status && a.status.toLowerCase().includes(query))
+            );
+            renderAkten(filtered);
+        };
+
+        window.toggleAktenModal = function(show) {
+            document.getElementById('akten-modal').classList.toggle('hidden', !show);
+        };
+
+        window.handleAddAkte = async function(e) {
+            e.preventDefault();
+            const target = document.getElementById('akte-target').value;
+            const reason = document.getElementById('akte-reason').value;
+            const penalty = document.getElementById('akte-penalty').value;
+            const status = document.getElementById('akte-status').value;
+            const notes = document.getElementById('akte-notes').value;
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
+                    target, reason, penalty, status, notes,
+                    author: currentUserData.klonId || currentUserData.email,
+                    timestamp: Date.now()
+                });
+                toggleAktenModal(false);
+                e.target.reset();
+            } catch (err) {
+                console.error("Fehler beim Speichern der Akte:", err);
+            }
+        };
+
+        window.deleteAkte = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id));
+            } catch (err) {
+                console.error("Fehler beim Löschen der Akte:", err);
+            }
+        };
+
+        function renderRoster(rosterList) {
+            const tbody = document.getElementById('roster-table-body');
+            tbody.innerHTML = '';
+
+            if (rosterList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-gray-500 font-mono italic">Keine Einheitsmitglieder eingetragen.</td></tr>';
+                return;
+            }
+
+            rosterList.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-shockRed/10 transition';
+
+                let actionTd = '';
+                if (currentUserData && currentUserData.level >= 3) {
+                    actionTd = `<td class="p-4 text-right roster-action-col">
+                        <button onclick="deleteRosterMember('${item.id}')" class="text-red-400 hover:text-white p-1" title="Löschen"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-shockRed text-red-glow">${item.rank}</td>
+                    <td class="p-4 font-semibold text-white">${item.name}</td>
+                    <td class="p-4">${item.role}</td>
+                    <td class="p-4">
+                        <span class="bg-red-950 text-red-300 border border-shockRed px-2.5 py-1 rounded text-xs font-mono font-bold red-glow">${item.status}</span>
+                    </td>
+                    ${actionTd}
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        window.toggleRosterModal = function(show) {
+            document.getElementById('roster-modal').classList.toggle('hidden', !show);
+        };
+
+        window.handleAddRosterMember = async function(e) {
+            e.preventDefault();
+            const rank = document.getElementById('roster-rank').value;
+            const name = document.getElementById('roster-name').value;
+            const role = document.getElementById('roster-role').value;
+            const status = document.getElementById('roster-status').value;
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), {
+                    rank, name, role, status, timestamp: Date.now()
+                });
+                toggleRosterModal(false);
+                e.target.reset();
+            } catch (err) {
+                console.error("Fehler beim Hinzufügen zum Roster:", err);
+            }
+        };
+
+        window.deleteRosterMember = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', id));
+            } catch (err) {
+                console.error("Fehler beim Löschen des Roster-Eintrags:", err);
+            }
+        };
+
+        // Render Admin User Clearance List
+        function renderAdminUserList(userList) {
+            const list = document.getElementById('user-management-list');
+            list.innerHTML = '';
+
+            userList.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-republicDark p-3 rounded border border-republicBorder';
+                div.innerHTML = `
+                    <div class="min-w-0 pr-2">
+                        <div class="font-bold text-white text-sm truncate">${u.klonId || u.email}</div>
+                        <div class="text-[10px] text-gray-500 font-mono truncate">${u.email}</div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-xs font-mono text-red-400">Stufe:</span>
+                        <select onchange="updateUserLevel('${u.uid}', this.value)" class="bg-black border border-shockRed text-white text-xs rounded p-1 font-mono">
+                            <option value="1" ${u.level === 1 ? 'selected' : ''}>1 (Trooper)</option>
+                            <option value="2" ${u.level === 2 ? 'selected' : ''}>2 (NCO)</option>
+                            <option value="3" ${u.level === 3 ? 'selected' : ''}>3 (Offizier)</option>
+                            <option value="4" ${u.level === 4 ? 'selected' : ''}>4 (Commander)</option>
+                        </select>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        window.updateUserLevel = async function(uid, newLevel) {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', uid), {
+                    level: parseInt(newLevel)
+                }, { merge: true });
+
+                if (currentUserData && currentUserData.uid === uid) {
+                    currentUserData.level = parseInt(newLevel);
+                    updateSecurityClearances();
+                }
+            } catch (err) {
+                console.error("Fehler beim Aktualisieren der Sicherheitsstufe:", err);
+            }
+        };
+
+        window.switchTab = function(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.add('hidden'));
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-gray-300');
+            });
+
+            const activeContent = document.getElementById('tab-' + tabName);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+
+            const activeBtn = document.getElementById('btn-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-gray-300');
+            }
+        };
+
+        window.copyToClipboard = function(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+        };
+
+        // Initialisiere Lucide Icons
+        window.onload = function() {
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
