@@ -1,216 +1,189 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klon Guard - Akten Terminal</title>
-    <!-- Tailwind CSS CDN -->
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Rajdhani & Orbitron -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        shockRed: '#E61C1C',
-                        shockRedBright: '#FF2A2A',
-                        shockRedDark: '#6A0505',
-                        republicDark: '#080A0E',
-                        republicPanel: '#0F131C',
-                        republicBorder: '#232A3B',
-                        republicText: '#C8D1E0'
-                    },
-                    fontFamily: {
-                        orbitron: ['Orbitron', 'sans-serif'],
-                        rajdhani: ['Rajdhani', 'sans-serif']
+                        guard: {
+                            red: '#8B0000',
+                            brightRed: '#DC143C',
+                            dark: '#0A0B0E',
+                            card: '#12141A',
+                            border: '#1E222D',
+                            text: '#E1E7EF'
+                        }
                     }
                 }
             }
         }
     </script>
+    
+    <!-- Lucide Icons & Fonts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
     <style>
         body {
-            background-color: #080A0E;
-            color: #C8D1E0;
-            font-family: 'Rajdhani', sans-serif;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(230, 28, 28, 0.22), transparent 60%),
-                radial-gradient(circle at 10% 90%, rgba(230, 28, 28, 0.08), transparent 40%);
-            background-attachment: fixed;
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #0A0B0E;
+            color: #E1E7EF;
         }
-
-        .red-glow {
-            box-shadow: 0 0 25px rgba(230, 28, 28, 0.6), 0 0 5px rgba(255, 42, 42, 0.8);
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
         }
-        
-        .red-glow-intense {
-            box-shadow: 0 0 35px rgba(230, 28, 28, 0.8), inset 0 0 15px rgba(230, 28, 28, 0.4);
+        /* Eigene Klasse für automatischen Zeilenumbruch bei langen Wörtern */
+        .force-break {
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
-
-        .red-border-glow {
-            border-color: #E61C1C;
-            box-shadow: 0 0 20px rgba(230, 28, 28, 0.4);
-        }
-
-        .text-red-glow {
-            text-shadow: 0 0 12px rgba(230, 28, 28, 0.9), 0 0 25px rgba(230, 28, 28, 0.5);
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #080A0E;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #E61C1C;
-            border-radius: 4px;
+        /* Textkürzung nach 2 Zeilen */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-shockRed selection:text-white">
+<body class="min-h-screen flex flex-col bg-guard-dark text-guard-text">
 
-    <div id="auth-loading-screen" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
-        <div class="w-16 h-16 bg-shockRed rounded-xl flex items-center justify-center font-orbitron font-black text-white text-2xl animate-pulse mb-4 red-glow">
-            ST
-        </div>
-        <p class="font-orbitron text-sm text-white tracking-widest uppercase">Initialisiere Akten-Terminal...</p>
-        <p class="text-xs text-red-400 font-mono mt-2">Prüfe Sicherheitsfreigabe...</p>
-    </div>
-
-    <header class="bg-republicPanel/90 backdrop-blur border-b-2 border-shockRed/40 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
-                <!-- Branding & Navigation Back -->
-                <div class="flex items-center gap-4">
-                    <a href="index.html" class="flex items-center gap-2 bg-black/60 hover:bg-shockRed/30 border border-shockRed/40 px-3 py-2 rounded-lg text-xs font-orbitron font-bold text-white transition red-glow">
-                        <i data-lucide="arrow-left" class="w-4 h-4 text-shockRed"></i> Hauptquartier
-                    </a>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-shockRed rounded-lg flex items-center justify-center font-orbitron font-black text-white text-xl shadow-lg red-glow border border-red-400">
-                            ST
-                        </div>
-                        <div>
-                            <h1 class="font-orbitron font-bold text-lg text-white tracking-wider uppercase">
-                                Akten-Terminal
-                            </h1>
-                            <p class="text-xs text-red-400/90 tracking-widest uppercase font-semibold text-red-glow">Klon Guard Datenbank</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- User Profile Display -->
-                <div class="relative group cursor-pointer py-2 shrink-0">
-                    <div class="flex items-center gap-2.5 bg-black/60 border border-shockRed/40 px-3 py-1.5 rounded-lg red-glow">
-                        <div class="flex flex-col items-end min-w-0">
-                            <span id="user-display-name" class="font-orbitron font-bold text-sm text-white truncate max-w-[120px]">CT-0000</span>
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-shockRedBright animate-ping"></span>
-                                <span id="user-display-level" class="text-xs font-mono font-bold text-red-400 text-red-glow">STUFE 1</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header Navigation -->
+    <header class="border-b border-guard-border bg-guard-card/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="shield" class="w-8 h-8 text-guard-brightRed"></i>
+                <span class="font-orbitron font-bold text-xl tracking-wider text-white">KLON GUARD <span class="text-guard-brightRed">AKTEN</span></span>
             </div>
+            
+            <a href="index.html" class="flex items-center space-x-2 bg-guard-border/50 hover:bg-guard-border px-4 py-2 rounded text-sm transition">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Hauptterminal</span>
+            </a>
         </div>
     </header>
 
-    <div id="toast-notification" class="hidden fixed top-24 right-6 z-50 bg-republicPanel border-2 border-shockRed px-4 py-3 rounded-xl shadow-2xl red-glow flex items-center gap-3">
-        <i data-lucide="info" class="w-5 h-5 text-shockRed"></i>
-        <span id="toast-message" class="text-xs font-mono text-white">Aktion erfolgreich.</span>
-    </div>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
-        <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 red-border-glow">
-            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <div>
-                    <h2 class="font-orbitron font-bold text-3xl text-white uppercase flex items-center gap-3">
-                        <i data-lucide="folder-search" class="text-shockRed text-red-glow"></i> Republikanische Akten
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">Gefängnis- und Strafakten der Republik (Echtzeit-Synchronisiert).</p>
-                </div>
-
-                <div id="akten-edit-controls" class="hidden">
-                    <button onclick="toggleAktenModal(true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
-                        <i data-lucide="file-plus" class="w-4 h-4"></i> Neue Akte Anlegen
-                    </button>
-                </div>
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+        
+        <!-- Controls & Suche -->
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-guard-card p-4 rounded-lg border border-guard-border">
+            <div class="relative w-full md:w-96">
+                <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+                <input type="text" id="searchInput" placeholder="Suche nach Name, ID oder Vergehen..." 
+                       class="w-full bg-guard-dark border border-guard-border rounded pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-guard-brightRed text-white">
             </div>
-
-            <!-- Search Field -->
-            <div class="relative mb-6">
-                <i data-lucide="search" class="absolute left-3.5 top-3 w-5 h-5 text-gray-500"></i>
-                <input type="text" id="akten-search-input" onkeyup="filterAktenList()" placeholder="Nach Name, Klon-ID oder Vergehen suchen..." class="w-full bg-black/70 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none font-mono">
-            </div>
-
-            <!-- Akten Container -->
-            <div id="akten-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <p class="text-sm text-gray-500 font-mono italic col-span-full">Lade Akten-Datenbank...</p>
-            </div>
+            
+            <button id="btnNewRecord" onclick="openNewRecordModal()" class="w-full md:w-auto bg-guard-brightRed hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold flex items-center justify-center space-x-2 transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Neue Akte anlegen</span>
+            </button>
         </div>
+
+        <!-- Akten Raster (Grid) -->
+        <div id="recordsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamisch befüllt über Firestore -->
+        </div>
+
     </main>
 
-    <div id="akten-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-orbitron font-bold text-xl text-white flex items-center gap-2">
-                    <i data-lucide="file-text" class="text-shockRed"></i> Neue Akte Anlegen
-                </h3>
-                <button onclick="toggleAktenModal(false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+    <!-- Modal: Neue Akte anlegen -->
+    <div id="newRecordModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-guard-card border border-guard-border rounded-lg max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-guard-border pb-3">
+                <h3 class="font-orbitron font-bold text-lg text-white">Neue Akte Erstellen</h3>
+                <button onclick="closeNewRecordModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form onsubmit="handleAddAkte(event)" class="space-y-4">
+            
+            <form id="recordForm" onsubmit="saveRecord(event)" class="space-y-3">
                 <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Klon / Zivilist</label>
-                    <input type="text" id="akte-target" required placeholder="z. B. CT-5555 Fives oder Kopfgeldjäger" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
-                </div>
-                <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Vergehen / Vorfall</label>
-                    <input type="text" id="akte-reason" required placeholder="z. B. §2 Unerlaubter Waffenbesitz" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
+                    <label class="block text-xs text-gray-400 mb-1">Subjekt (ID / Name)</label>
+                    <input type="text" id="targetName" required placeholder="z.B. CT-9028 Test" class="w-full bg-guard-dark border border-guard-border rounded p-2 text-sm focus:outline-none focus:border-guard-brightRed">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Haftzeit / Strafe</label>
-                        <input type="text" id="akte-penalty" required placeholder="z. B. 10 Minuten / Bußgeld" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Aktivitäts-Status</label>
-                        <select id="akte-status" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
+                        <label class="block text-xs text-gray-400 mb-1">Status</label>
+                        <select id="recordStatus" class="w-full bg-guard-dark border border-guard-border rounded p-2 text-sm focus:outline-none focus:border-guard-brightRed">
                             <option value="INHAFTIERT">INHAFTIERT</option>
                             <option value="GESUCHT">GESUCHT</option>
-                            <option value="ENTLASSEN">ENTLASSEN</option>
+                            <option value="VERWARNUNG">VERWARNUNG</option>
+                            <option value="ERLEDIGT">ERLEDIGT</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Strafe/Haftzeit</label>
+                        <input type="text" id="recordPenalty" placeholder="z.B. 10 Min / 500 Credits" class="w-full bg-guard-dark border border-guard-border rounded p-2 text-sm focus:outline-none focus:border-guard-brightRed">
                     </div>
                 </div>
                 <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Details &amp; Vermerk</label>
-                    <textarea id="akte-notes" rows="3" placeholder="Zusätzliche Bemerkungen..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none"></textarea>
+                    <label class="block text-xs text-gray-400 mb-1">Vergehen</label>
+                    <input type="text" id="recordOffense" required placeholder="z.B. 8.5 Mord" class="w-full bg-guard-dark border border-guard-border rounded p-2 text-sm focus:outline-none focus:border-guard-brightRed">
                 </div>
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="toggleAktenModal(false)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Akte Speichern</button>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Beschreibung / Notizen</label>
+                    <textarea id="recordNotes" rows="4" placeholder="Detaillierte Schilderung des Vorfalls..." class="w-full bg-guard-dark border border-guard-border rounded p-2 text-sm focus:outline-none focus:border-guard-brightRed"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeNewRecordModal()" class="px-4 py-2 bg-guard-border rounded text-sm hover:bg-gray-700">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 bg-guard-brightRed hover:bg-red-700 text-white rounded text-sm font-semibold">Akte Speichern</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer class="bg-republicPanel border-t border-shockRed/30 py-6 mt-12">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400">
-            <p class="font-orbitron text-gray-300">Klon Guard — Akten-Terminal der Großen Armee der Republik</p>
+    <!-- Modal: Akte Detail-Ansicht -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-guard-card border border-guard-border rounded-lg max-w-2xl w-full p-6 space-y-4">
+            <div class="flex justify-between items-start border-b border-guard-border pb-3">
+                <div>
+                    <div class="flex items-center space-x-3">
+                        <h3 id="detailTarget" class="font-orbitron font-bold text-xl text-white"></h3>
+                        <span id="detailStatusBadge" class="px-2 py-0.5 text-xs font-semibold rounded border"></span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Erstellt von: <span id="detailOfficer" class="text-gray-200"></span></p>
+                </div>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="space-y-3 py-2">
+                <div>
+                    <span class="text-xs text-gray-400 block">Vergehen:</span>
+                    <p id="detailOffense" class="text-white font-medium force-break"></p>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 block">Strafe / Haft:</span>
+                    <p id="detailPenalty" class="text-white force-break"></p>
+                </div>
+                <div class="border-t border-guard-border/50 pt-3">
+                    <span class="text-xs text-gray-400 block mb-1">Vollständige Beschreibung / Notizen:</span>
+                    <div id="detailNotes" class="bg-guard-dark p-3 rounded text-sm text-gray-300 force-break whitespace-pre-wrap max-h-60 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-guard-border pt-3">
+                <button id="btnDeleteDetail" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-800 px-3 py-1.5 rounded text-sm flex items-center space-x-1.5 transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>Akte Löschen</span>
+                </button>
+                <button onclick="closeDetailModal()" class="px-4 py-2 bg-guard-border hover:bg-gray-700 rounded text-sm">Schließen</button>
+            </div>
         </div>
-    </footer>
+    </div>
 
+    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAp3If3RjAzS4gG8sfKiwhnBgCOmXsGiEo",
             authDomain: "klon-guard.firebaseapp.com",
@@ -225,178 +198,161 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'klon-guard-swrp';
-        let currentUserData = null;
-        let cachedAkten = [];
+        let recordsData = [];
+        let currentUser = null;
 
-        onAuthStateChanged(auth, async (user) => {
-            const loader = document.getElementById('auth-loading-screen');
+        // Auth Check
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid);
-                onSnapshot(userDocRef, (snap) => {
-                    if (snap.exists()) {
-                        currentUserData = snap.data();
-                        currentUserData.level = Number(currentUserData.level ?? 0);
-                    } else {
-                        currentUserData = {
-                            uid: user.uid,
-                            email: user.email,
-                            klonId: user.email.split('@')[0],
-                            level: 1
-                        };
-                    }
-                    updateProfileUI();
-                    startAktenRealtimeListener();
-                    if (loader) loader.classList.add('hidden');
-                }, (err) => {
-                    console.error("Fehler beim Laden des Benutzerprofils:", err);
-                    if (loader) loader.classList.add('hidden');
-                });
+                currentUser = user;
+                loadRecords();
             } else {
-                // Safely handle redirection without throwing SyntaxError in preview/iframe environments
-                setTimeout(() => {
-                    if (!auth.currentUser) {
-                        try {
-                            if (window.location && window.location.protocol && window.location.protocol.startsWith('http')) {
-                                window.location.href = "index.html";
-                            }
-                        } catch (e) {
-                            console.warn("Navigation safely bypassed in preview environment:", e);
-                        }
-                    }
-                }, 1200);
-            }
-            if (window.lucide && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
+                // Bei lokalem Testen keinen harten Redirect erzwingen
+                if (window.location.protocol.startsWith('http')) {
+                    try { window.location.href = "index.html"; } catch(e){}
+                }
             }
         });
 
-        function updateProfileUI() {
-            const level = currentUserData ? Number(currentUserData.level || 0) : 0;
-            const displayName = currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Trooper';
-            
-            document.getElementById('user-display-name').innerText = displayName;
-            document.getElementById('user-display-level').innerText = `STUFE ${level}`;
-
-            const aktenControls = document.getElementById('akten-edit-controls');
-            if (level >= 2) {
-                aktenControls.classList.remove('hidden');
-            } else {
-                aktenControls.classList.add('hidden');
-            }
+        // Live Synchronisation der Akten
+        function loadRecords() {
+            const q = query(collection(db, "akten"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                recordsData = [];
+                snapshot.forEach((doc) => {
+                    recordsData.push({ id: doc.id, ...doc.data() });
+                });
+                renderRecords(recordsData);
+            });
         }
 
-        function startAktenRealtimeListener() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), (snapshot) => {
-                cachedAkten = [];
-                snapshot.forEach(doc => cachedAkten.push({ id: doc.id, ...doc.data() }));
-                renderAkten(cachedAkten);
-            }, err => console.error("Firestore Akten Error:", err));
-        }
+        // Akten rendern
+        function renderRecords(list) {
+            const container = document.getElementById("recordsGrid");
+            container.innerHTML = "";
 
-        function renderAkten(aktenList) {
-            const container = document.getElementById('akten-list-container');
-            container.innerHTML = '';
-
-            if (aktenList.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-500 font-mono italic col-span-full">Keine Akten in der Datenbank gefunden.</p>`;
+            if(list.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">Keine Akten gefunden.</div>`;
                 return;
             }
 
-            aktenList.forEach(akte => {
-                const canDelete = currentUserData && currentUserData.level >= 3;
-                let statusColor = 'text-amber-400 border-amber-400/40 bg-amber-950/30';
-                if (akte.status === 'INHAFTIERT') statusColor = 'text-red-400 border-red-400/40 bg-red-950/30';
-                if (akte.status === 'ENTLASSEN') statusColor = 'text-emerald-400 border-emerald-400/40 bg-emerald-950/30';
+            list.forEach((rec) => {
+                const card = document.createElement("div");
+                card.className = "bg-guard-card border border-guard-border hover:border-guard-brightRed/50 rounded-lg p-4 cursor-pointer transition flex flex-col justify-between space-y-3";
+                
+                // Klick öffnet das Detail-Modal
+                card.onclick = (e) => {
+                    if(!e.target.closest('.no-click')) {
+                        openDetailModal(rec);
+                    }
+                };
 
-                const card = document.createElement('div');
-                card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)]';
+                const statusColor = rec.status === 'INHAFTIERT' ? 'border-red-600 text-red-500 bg-red-950/30' : 'border-yellow-600 text-yellow-500 bg-yellow-950/30';
+
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-orbitron font-bold text-white text-lg truncate">${akte.target}</h3>
-                            <span class="text-[10px] font-mono border px-2 py-0.5 rounded ${statusColor}">${akte.status}</span>
+                        <div class="flex justify-between items-start gap-2 mb-2">
+                            <h4 class="font-orbitron font-bold text-base text-white force-break">${escapeHtml(rec.target || 'Unbekannt')}</h4>
+                            <span class="text-[10px] px-2 py-0.5 font-bold border rounded ${statusColor}">${escapeHtml(rec.status || 'OFFEN')}</span>
                         </div>
-                        <div class="space-y-2 text-xs font-mono text-gray-300 mb-4">
-                            <p><span class="text-gray-500">Vergehen:</span> ${akte.reason}</p>
-                            <p><span class="text-gray-500">Strafe/Haft:</span> ${akte.penalty}</p>
-                            ${akte.notes ? `<p class="text-gray-400 italic text-[11px] pt-1 border-t border-republicBorder/40">"${akte.notes}"</p>` : ''}
-                        </div>
+                        <p class="text-xs text-gray-400 mb-1 force-break"><strong class="text-gray-300">Vergehen:</strong> ${escapeHtml(rec.offense || '-')}</p>
+                        <p class="text-xs text-gray-400 mb-2 force-break"><strong class="text-gray-300">Strafe/Haft:</strong> ${escapeHtml(rec.penalty || '-')}</p>
+                        
+                        ${rec.notes ? `<p class="text-xs text-gray-400 italic bg-guard-dark/50 p-2 rounded force-break line-clamp-2">"${escapeHtml(rec.notes)}"</p>` : ''}
                     </div>
-                    <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-3 border-t border-republicBorder/40">
-                        <span>Offizier: ${akte.author || 'Unbekannt'}</span>
-                        ${canDelete ? `<button onclick="deleteAkte('${akte.id}')" class="text-red-400 hover:text-red-300 flex items-center gap-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Löschen</button>` : ''}
+
+                    <div class="flex justify-between items-center text-[11px] text-gray-500 border-t border-guard-border/40 pt-2">
+                        <span>Offizier: ${escapeHtml(rec.officer || 'Unbekannt')}</span>
+                        <button onclick="event.stopPropagation(); deleteRecord('${rec.id}')" class="no-click text-red-500 hover:text-red-400 flex items-center space-x-1 p-1">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            <span>Löschen</span>
+                        </button>
                     </div>
                 `;
                 container.appendChild(card);
             });
-            if (window.lucide && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
+
+            if (window.lucide) lucide.createIcons();
         }
 
-        window.filterAktenList = function() {
-            const query = document.getElementById('akten-search-input').value.toLowerCase();
-            const filtered = cachedAkten.filter(a => 
-                (a.target && a.target.toLowerCase().includes(query)) ||
-                (a.reason && a.reason.toLowerCase().includes(query)) ||
-                (a.notes && a.notes.toLowerCase().includes(query))
+        // Suche
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = recordsData.filter(r => 
+                (r.target && r.target.toLowerCase().includes(val)) ||
+                (r.offense && r.offense.toLowerCase().includes(val)) ||
+                (r.officer && r.officer.toLowerCase().includes(val))
             );
-            renderAkten(filtered);
+            renderRecords(filtered);
+        });
+
+        // Modals Steuerung
+        window.openNewRecordModal = () => document.getElementById("newRecordModal").classList.remove("hidden");
+        window.closeNewRecordModal = () => document.getElementById("newRecordModal").classList.add("hidden");
+
+        window.openDetailModal = (rec) => {
+            document.getElementById("detailTarget").innerText = rec.target || 'Unbekannt';
+            document.getElementById("detailOffense").innerText = rec.offense || '-';
+            document.getElementById("detailPenalty").innerText = rec.penalty || '-';
+            document.getElementById("detailNotes").innerText = rec.notes || 'Keine Notizen vorhanden.';
+            document.getElementById("detailOfficer").innerText = rec.officer || 'Unbekannt';
+            
+            const badge = document.getElementById("detailStatusBadge");
+            badge.innerText = rec.status || 'OFFEN';
+            badge.className = `px-2 py-0.5 text-xs font-semibold rounded border ${rec.status === 'INHAFTIERT' ? 'border-red-600 text-red-500 bg-red-950/30' : 'border-yellow-600 text-yellow-500 bg-yellow-950/30'}`;
+
+            document.getElementById("btnDeleteDetail").onclick = () => {
+                deleteRecord(rec.id);
+                closeDetailModal();
+            };
+
+            document.getElementById("detailModal").classList.remove("hidden");
         };
 
-        window.handleAddAkte = async function(e) {
+        window.closeDetailModal = () => document.getElementById("detailModal").classList.add("hidden");
+
+        // Neue Akte speichern
+        window.saveRecord = async (e) => {
             e.preventDefault();
-            const target = document.getElementById('akte-target').value;
-            const reason = document.getElementById('akte-reason').value;
-            const penalty = document.getElementById('akte-penalty').value;
-            const status = document.getElementById('akte-status').value;
-            const notes = document.getElementById('akte-notes').value;
+            const target = document.getElementById("targetName").value;
+            const status = document.getElementById("recordStatus").value;
+            const penalty = document.getElementById("recordPenalty").value;
+            const offense = document.getElementById("recordOffense").value;
+            const notes = document.getElementById("recordNotes").value;
 
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
+                await addDoc(collection(db, "akten"), {
                     target,
-                    reason,
-                    penalty,
                     status,
+                    penalty,
+                    offense,
                     notes,
-                    author: currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Unbekannt',
-                    timestamp: new Date().toLocaleDateString('de-DE')
+                    officer: currentUser?.displayName || currentUser?.email?.split('@')[0] || "Guard Offizier",
+                    createdAt: serverTimestamp()
                 });
-                toggleAktenModal(false);
-                e.target.reset();
-                showToast("Akte erfolgreich in der Datenbank gespeichert!");
+                closeNewRecordModal();
+                document.getElementById("recordForm").reset();
             } catch (err) {
-                console.error("Fehler beim Speichern der Akte:", err);
-                showToast("Fehler beim Speichern der Akte!");
+                alert("Fehler beim Speichern: " + err.message);
             }
         };
 
-        window.deleteAkte = async function(id) {
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id));
-                showToast("Akte wurde aus der Datenbank entfernt.");
-            } catch (err) {
-                console.error("Fehler beim Löschen der Akte:", err);
-                showToast("Fehler beim Löschen!");
+        // Akte löschen
+        window.deleteRecord = async (id) => {
+            if(confirm("Möchtest du diese Akte wirklich unwiderruflich löschen?")) {
+                try {
+                    await deleteDoc(doc(db, "akten", id));
+                } catch(err) {
+                    alert("Fehler beim Löschen: " + err.message);
+                }
             }
         };
 
-        window.toggleAktenModal = function(show) {
-            const modal = document.getElementById('akten-modal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        };
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            const msgEl = document.getElementById('toast-message');
-            if (toast && msgEl) {
-                msgEl.innerText = msg;
-                toast.classList.remove('hidden');
-                setTimeout(() => toast.classList.add('hidden'), 3000);
-            }
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
+
+        window.onload = () => { if (window.lucide) lucide.createIcons(); };
     </script>
 </body>
 </html>
