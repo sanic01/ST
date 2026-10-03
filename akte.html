@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2pdf.js für PDF Generierung -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -166,7 +168,6 @@
                 <button onclick="toggleModal('create-case-modal', false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
             </div>
             <form onsubmit="handleCreateCase(event)" class="space-y-4 font-mono">
-                <!-- Zielperson mit Live-Vorschlägen -->
                 <div class="relative">
                     <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Verdächtiger</label>
                     <input type="text" id="case-target" required autocomplete="off" oninput="handleNameSuggestions(this.value)" placeholder="z. B. CT-9999 oder Unbekannter" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
@@ -216,7 +217,7 @@
         </div>
     </div>
 
-    <!-- Modal: Offener Fall Detail & Live Chat Dossier -->
+    <!-- Modal: Offener Fall Detail -->
     <div id="case-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="max-w-3xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
             <div class="flex justify-between items-start border-b border-republicBorder pb-3">
@@ -272,7 +273,7 @@
         </div>
     </div>
 
-    <!-- Modal: Ausgebaute Personenakte (Stammdaten + Fälle) -->
+    <!-- Modal: Ausgebaute Personenakte (Stammdaten + Fälle) mit DRUCK-BUTTON -->
     <div id="person-akte-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="max-w-3xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
             
@@ -297,9 +298,15 @@
                         <h4 class="font-orbitron font-bold text-sm text-shockRed flex items-center gap-2">
                             <i data-lucide="user" class="w-4 h-4"></i> Personal-Stammdaten
                         </h4>
-                        <button id="btn-edit-profile" onclick="toggleEditProfile(true)" class="hidden text-xs text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded font-orbitron border border-gray-600 flex items-center gap-1">
-                            <i data-lucide="edit-3" class="w-3 h-3"></i> Bearbeiten
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <!-- DRUCKEN / PDF BUTTON -->
+                            <button onclick="generateAktePDF()" class="text-xs text-white bg-shockRed hover:bg-shockRedBright px-3 py-1 rounded font-orbitron border border-red-400 flex items-center gap-1.5 red-glow transition">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Drucken / PDF
+                            </button>
+                            <button id="btn-edit-profile" onclick="toggleEditProfile(true)" class="hidden text-xs text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded font-orbitron border border-gray-600 flex items-center gap-1">
+                                <i data-lucide="edit-3" class="w-3 h-3"></i> Bearbeiten
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Anzeigeansicht Stammdaten -->
@@ -447,14 +454,12 @@
         }
 
         function startRealtimeListeners() {
-            // Akten (Fälle/Strafen)
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), (snap) => {
                 cachedAkten = [];
                 snap.forEach(d => cachedAkten.push({ id: d.id, ...d.data() }));
                 renderList();
             });
 
-            // Offene Fälle
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'open_cases'), (snap) => {
                 cachedCases = [];
                 snap.forEach(d => cachedCases.push({ id: d.id, ...d.data() }));
@@ -465,7 +470,6 @@
                 }
             });
 
-            // Person profiles (Stammdaten)
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'person_profiles'), (snap) => {
                 cachedProfiles = {};
                 snap.forEach(d => { cachedProfiles[d.id] = d.data(); });
@@ -496,7 +500,6 @@
             renderList();
         };
 
-        // HOLT ALLE BEREITS REGISTRIERTEN NAMEN FÜR VORSCHLÄGE
         function getAllKnownNames() {
             const names = new Set();
             cachedAkten.forEach(a => { if (a.target) names.add(a.target.trim()); });
@@ -505,7 +508,6 @@
             return Array.from(names);
         }
 
-        // NAMENSVORSCHLÄGE BEIM EINGEBEN
         window.handleNameSuggestions = function(val) {
             const container = document.getElementById('name-suggestions');
             const query = val.trim().toLowerCase();
@@ -545,7 +547,6 @@
             const query = (document.getElementById('akten-search-input').value || '').toLowerCase();
 
             if (activeTab === 'cases') {
-                // OFFENE FÄLLE
                 let list = cachedCases.filter(c => c.status === 'OFFEN' && (
                     (c.target && c.target.toLowerCase().includes(query)) ||
                     (c.crime && c.crime.toLowerCase().includes(query)) ||
@@ -588,7 +589,6 @@
                 });
 
             } else if (activeTab === 'open') {
-                // INHAFTIERT
                 let list = cachedAkten.filter(a => a.status === 'INHAFTIERT' && (
                     (a.target && a.target.toLowerCase().includes(query)) ||
                     (a.reason && a.reason.toLowerCase().includes(query))
@@ -650,17 +650,14 @@
                 updateTimers();
 
             } else {
-                // PERSONEN AKTEN (NACH PERSON GRUPPIERT)
                 const personGroups = {};
                 
-                // Erfasse alle Personen aus den Akten
                 cachedAkten.forEach(akte => {
                     const name = (akte.target || 'Unbekannt').trim();
                     if (!personGroups[name]) personGroups[name] = [];
                     personGroups[name].push(akte);
                 });
 
-                // Auch Personen anzeigen, für die bisher nur Stammdaten ohne Akten existieren
                 Object.keys(cachedProfiles).forEach(pName => {
                     if (!personGroups[pName]) personGroups[pName] = [];
                 });
@@ -737,7 +734,6 @@
             });
         }
 
-        // LÖSCHEN EINER GESAMTEN PERSON
         window.deleteEntirePerson = async function(personName) {
             if (!confirm(`Möchtest du wirklich die GESAMTE Person "${personName}" und ALLE ihre Akteneinträge unwiderruflich löschen?`)) return;
 
@@ -747,7 +743,6 @@
                 for (const item of entriesToDelete) {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', item.id));
                 }
-                // Falls ein Profil existiert, ebenfalls löschen
                 if (cachedProfiles[personName]) {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'person_profiles', personName));
                 }
@@ -758,7 +753,6 @@
             }
         };
 
-        // PERSONEN AKTE MODAL
         window.openPersonModal = function(personName) {
             activePersonName = personName;
             toggleEditProfile(false);
@@ -772,7 +766,6 @@
 
             renderPersonProfileData(personName);
 
-            // Straffälle rendern
             const entries = cachedAkten.filter(a => (a.target || '').trim().toLowerCase() === personName.trim().toLowerCase());
             document.getElementById('person-modal-count').innerText = `${entries.length} Fälle / Vermerke`;
 
@@ -824,6 +817,159 @@
             if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         };
 
+        // DRUCK & PDF GENERATOR IM ST- / SENATSDESIGN
+        window.generateAktePDF = function() {
+            if (!activePersonName) return;
+
+            showToast("Generiere PDF-Dossier...");
+
+            const profile = cachedProfiles[activePersonName] || {};
+            const entries = cachedAkten.filter(a => (a.target || '').trim().toLowerCase() === activePersonName.trim().toLowerCase());
+            const exportDate = new Date().toLocaleDateString('de-DE') + ' - ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const officerName = currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Shock Trooper Guard';
+
+            // SVG Rotes Senatslogo (Galaktischer Senat)
+            const senateLogoSvg = `
+                <svg width="70" height="70" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="46" stroke="#E61C1C" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="38" stroke="#E61C1C" stroke-width="2" stroke-dasharray="4 2"/>
+                    <circle cx="50" cy="50" r="14" fill="#E61C1C"/>
+                    <path d="M50 4 L50 22 M50 78 L50 96 M4 50 L22 50 M78 50 L96 50 M17 17 L30 30 M70 70 L83 83 M17 83 L30 70 M70 30 L83 17" stroke="#E61C1C" stroke-width="3"/>
+                </svg>
+            `;
+
+            // HTML Element für PDF Rendering dynamisch bauen
+            const printElement = document.createElement('div');
+            printElement.style.padding = '30px';
+            printElement.style.backgroundColor = '#0D0F14';
+            printElement.style.color = '#E0E6ED';
+            printElement.style.fontFamily = 'monospace';
+            printElement.style.fontSize = '12px';
+
+            let casesHtml = '';
+            if (entries.length === 0) {
+                casesHtml = `<div style="padding: 12px; border: 1px dashed #333; text-align: center; color: #888;">Keine registrierten Straffälle in der Datenbank vorhanden.</div>`;
+            } else {
+                entries.forEach((e, idx) => {
+                    casesHtml += `
+                        <div style="margin-bottom: 15px; border: 1px solid #E61C1C; background: #141822; padding: 12px; border-radius: 4px;">
+                            <div style="display: flex; justify-between: space-between; border-bottom: 1px solid #E61C1C; padding-bottom: 5px; margin-bottom: 8px;">
+                                <strong style="color: #E61C1C; font-size: 13px;">FALL #${entries.length - idx} — VERMERK</strong>
+                                <span style="background: #2A0808; color: #FF4D4D; padding: 2px 6px; border-radius: 3px; font-size: 10px; border: 1px solid #E61C1C;">STATUS: ${e.status || 'ERFASST'}</span>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                                <tr>
+                                    <td style="width: 120px; color: #888; padding: 2px 0;">Straftat/Vergehen:</td>
+                                    <td style="color: #FFF; font-weight: bold; padding: 2px 0;">${e.reason || 'Keine Angabe'}</td>
+                                </tr>
+                                ${e.penalty ? `
+                                <tr>
+                                    <td style="color: #888; padding: 2px 0;">Strafmaß/Haft:</td>
+                                    <td style="color: #FFD700; padding: 2px 0;">${e.penalty}</td>
+                                </tr>` : ''}
+                                ${e.notes ? `
+                                <tr>
+                                    <td style="color: #888; padding: 2px 0; vertical-align: top;">Anmerkungen:</td>
+                                    <td style="color: #CCC; font-style: italic; background: #0A0C10; padding: 6px; border-radius: 3px; margin-top: 4px; display: block;">"${e.notes}"</td>
+                                </tr>` : ''}
+                            </table>
+                            <div style="margin-top: 8px; font-size: 9px; color: #666; text-align: right; border-top: 1px solid #222; padding-top: 4px;">
+                                Erfasst durch: <strong>${e.author || 'ST-Officer'}</strong> | Datum: ${e.timestamp || '--'}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            printElement.innerHTML = `
+                <div style="border: 2px solid #E61C1C; padding: 20px; background: #080A0E; border-radius: 8px;">
+                    <!-- SENAT HEADER -->
+                    <div style="text-align: center; border-bottom: 2px solid #E61C1C; padding-bottom: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+                            ${senateLogoSvg}
+                        </div>
+                        <h1 style="color: #FFF; font-size: 20px; letter-spacing: 2px; margin: 5px 0 2px 0; font-family: sans-serif; text-transform: uppercase;">GROSSE ARMEE DER REPUBLIK</h1>
+                        <h2 style="color: #E61C1C; font-size: 13px; letter-spacing: 3px; margin: 0; font-family: sans-serif; text-transform: uppercase;">CORUSCANT GUARD — KLON GUARD DOSSIER</h2>
+                        <div style="margin-top: 10px; font-size: 9px; color: #FF4D4D; background: #2A0505; border: 1px solid #E61C1C; display: inline-block; padding: 3px 10px; border-radius: 3px; letter-spacing: 1px;">
+                            ST-VERBRAUCHSSICHERE DIENSTSACHE // NUR FÜR BEFUGTES PERSONAL
+                        </div>
+                    </div>
+
+                    <!-- META INFOS -->
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #222; pb-2;">
+                        <div>AKTEN-ID: <strong style="color: #FFF;">ST-DOSSIER-${Math.floor(1000 + Math.random() * 9000)}</strong></div>
+                        <div>EXPORTHINWEIS: <strong style="color: #FFF;">${exportDate} UHR</strong></div>
+                        <div>AUSGESTELLT VON: <strong style="color: #E61C1C;">${officerName}</strong></div>
+                    </div>
+
+                    <!-- PERSONEN DETAILS / STAMMDATEN -->
+                    <div style="background: #10141D; border: 1px solid #E61C1C; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                        <h3 style="color: #E61C1C; font-size: 14px; margin: 0 0 10px 0; border-bottom: 1px solid #222; padding-bottom: 5px; font-family: sans-serif; text-transform: uppercase;">
+                            1. PERSONEN-STAMMDATEN
+                        </h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                            <tr>
+                                <td style="width: 130px; color: #888; padding: 4px 0;">NAME / SUBJEKT:</td>
+                                <td style="color: #FFF; font-size: 15px; font-weight: bold; font-family: sans-serif; padding: 4px 0;">${activePersonName}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 4px 0;">SPEZIES:</td>
+                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.species || 'Unbekannt'}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 4px 0;">FRAKTION / HERKUNFT:</td>
+                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.faction || 'Unbekannt'}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 4px 0;">IDENT-ID / CODE:</td>
+                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.ident || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 4px 0;">GEFAHRENSTUFE:</td>
+                                <td style="color: #FF2A2A; font-weight: bold; padding: 4px 0;">${(profile.danger || 'Gering').toUpperCase()}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 6px 0; vertical-align: top;">STAMMDATEN NOTIZEN:</td>
+                                <td style="color: #CCC; font-style: italic; background: #0A0C10; padding: 8px; border-radius: 4px; border: 1px solid #1C2333;">${profile.notes || 'Keine Notizen hinterlegt.'}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- HISTORIE PROTOKOLLE -->
+                    <div style="margin-bottom: 10px;">
+                        <h3 style="color: #E61C1C; font-size: 14px; margin: 0 0 10px 0; border-bottom: 1px solid #222; padding-bottom: 5px; font-family: sans-serif; text-transform: uppercase;">
+                            2. ERFASSTE STRAFFÄLLE & HAFTVERMERKE (${entries.length})
+                        </h3>
+                        ${casesHtml}
+                    </div>
+
+                    <!-- FOOTER / STEMPEL -->
+                    <div style="margin-top: 30px; border-top: 2px solid #E61C1C; padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div style="font-size: 8px; color: #666; max-width: 300px;">
+                            Dieses Dokument entstammt der Sicherheitsdatenbank der Coruscant Guard. Unbefugte Vervielfältigung oder Weitergabe wird gemäß Militärstrafgesetzbuch der Galaktischen Republik geahndet.
+                        </div>
+                        <div style="border: 2px solid #E61C1C; color: #E61C1C; padding: 8px 15px; font-weight: bold; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; transform: rotate(-3deg);">
+                            GEPRÜFT & BESTÄTIGT<br><span style="font-size: 8px; color: #FFF;">ST-HEADQUARTERS</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // PDF Optionen für html2pdf
+            const opt = {
+                margin:       [8, 8, 8, 8],
+                filename:     `Akte_${activePersonName.replace(/\s+/g, '_')}_ST_Guard.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0D0F14' },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // PDF erstellen und ausführen
+            html2pdf().set(opt).from(printElement).save().then(() => {
+                showToast("PDF erfolgreich heruntergeladen!");
+            });
+        };
+
         function renderPersonProfileData(personName) {
             const profile = cachedProfiles[personName] || {};
 
@@ -833,7 +979,6 @@
             document.getElementById('pv-danger').innerText = profile.danger || 'Gering';
             document.getElementById('pv-notes').innerText = profile.notes || 'Keine zusätzlichen Stammdaten hinterlegt.';
 
-            // Formular-Werte vorbereiten
             document.getElementById('pe-species').value = profile.species || '';
             document.getElementById('pe-faction').value = profile.faction || '';
             document.getElementById('pe-ident').value = profile.ident || '';
@@ -878,7 +1023,6 @@
             }
         };
 
-        // CHAT & CASE SPEICHERUNGEN
         window.openCaseDetails = function(caseId) {
             selectedCaseId = caseId;
             const c = cachedCases.find(item => item.id === caseId);
