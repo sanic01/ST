@@ -318,9 +318,9 @@
                             <span class="text-[10px] font-mono border px-2 py-0.5 rounded ${statusColor}">${akte.status}</span>
                         </div>
                         <div class="space-y-2 text-xs font-mono text-gray-300 mb-4">
-                            <p><span class="text-gray-500">Vergehen:</span> ${akte.reason}</p>
-                            <p><span class="text-gray-500">Strafe/Haft:</span> ${akte.penalty}</p>
-                            ${akte.notes ? `<p class="text-gray-400 italic text-[11px] pt-1 border-t border-republicBorder/40">"${akte.notes}"</p>` : ''}
+                            <p class="break-words"><span class="text-gray-500">Vergehen:</span> ${akte.reason}</p>
+                            <p class="break-words"><span class="text-gray-500">Strafe/Haft:</span> ${akte.penalty}</p>
+                            ${akte.notes ? `<p class="text-gray-400 italic text-[11px] pt-1 border-t border-republicBorder/40 break-words">"${akte.notes}"</p>` : ''}
                         </div>
                     </div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-3 border-t border-republicBorder/40">
