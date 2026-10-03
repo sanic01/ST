@@ -138,7 +138,7 @@
 
                 <div id="akten-edit-controls" class="hidden">
                     <button onclick="toggleModal('create-case-modal', true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
-                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Neuland / Fall Eröffnen
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Fall / Akte Eröffnen
                     </button>
                 </div>
             </div>
@@ -218,7 +218,6 @@
     <div id="case-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="max-w-3xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
             
-            <!-- Header -->
             <div class="flex justify-between items-start border-b border-republicBorder pb-3">
                 <div>
                     <div class="flex items-center gap-2">
@@ -231,7 +230,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4 flex-grow overflow-hidden">
-                <!-- Linke Spalte: Details & Zeugen -->
                 <div class="md:col-span-1 space-y-3 overflow-y-auto pr-1 border-r border-republicBorder/50">
                     <div>
                         <span class="text-[10px] font-orbitron text-gray-500 uppercase block">Straftat:</span>
@@ -248,23 +246,16 @@
                         <p>Datum: <span id="case-detail-date">--</span></p>
                     </div>
 
-                    <div id="case-action-buttons" class="pt-2 space-y-2">
-                        <!-- Buttons zum Festnehmen / Abschließen -->
-                    </div>
+                    <div id="case-action-buttons" class="pt-2 space-y-2"></div>
                 </div>
 
-                <!-- Rechte Spalte: Live Chat & Ermittlungs-Verlauf -->
                 <div class="md:col-span-2 flex flex-col h-full bg-black/50 border border-republicBorder rounded-xl p-3">
                     <span class="text-xs font-orbitron text-shockRed font-bold border-b border-republicBorder pb-1 mb-2 flex items-center gap-1.5">
                         <i data-lucide="messages-square" class="w-3.5 h-3.5"></i> Ermittlungs-Protokoll & Chat
                     </span>
 
-                    <!-- Nachrichten Stream -->
-                    <div id="case-chat-messages" class="flex-grow overflow-y-auto space-y-2.5 pr-2 mb-3 min-h-[180px]">
-                        <!-- Chat Nachrichten -->
-                    </div>
+                    <div id="case-chat-messages" class="flex-grow overflow-y-auto space-y-2.5 pr-2 mb-3 min-h-[180px]"></div>
 
-                    <!-- Chat Eingabefeld -->
                     <form onsubmit="handleSendCaseComment(event)" class="flex gap-2">
                         <input type="text" id="case-chat-input" placeholder="Anmerkung / Beweis einfügen..." required class="flex-grow bg-black/70 border border-republicBorder focus:border-shockRed rounded p-2 text-xs text-white focus:outline-none">
                         <button type="submit" class="bg-shockRed hover:bg-shockRedBright text-white px-3 py-2 rounded text-xs font-orbitron font-bold red-glow flex items-center justify-center">
@@ -280,7 +271,7 @@
         </div>
     </div>
 
-    <!-- Modal: Person/Akte Modal (Gewohnt) -->
+    <!-- Modal: Person/Akte Modal -->
     <div id="person-akte-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="max-w-2xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
             <div class="flex justify-between items-start mb-4 border-b border-republicBorder pb-3">
@@ -336,7 +327,7 @@
         let currentUserData = null;
         let cachedAkten = [];
         let cachedCases = [];
-        let activeTab = 'cases'; // 'cases' (Offene Fälle), 'open' (Inhaftiert), 'archive' (Akten)
+        let activeTab = 'cases'; 
         let selectedCaseId = null;
         let timerInterval = null;
 
@@ -382,14 +373,12 @@
         }
 
         function startRealtimeListeners() {
-            // Listen Akten
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), (snap) => {
                 cachedAkten = [];
                 snap.forEach(d => cachedAkten.push({ id: d.id, ...d.data() }));
                 renderList();
             });
 
-            // Listen Offene Fälle
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'open_cases'), (snap) => {
                 cachedCases = [];
                 snap.forEach(d => cachedCases.push({ id: d.id, ...d.data() }));
@@ -499,11 +488,11 @@
                             <div class="bg-red-950/40 border border-shockRed/50 rounded-lg p-2.5 my-3 flex justify-between items-center">
                                 <div>
                                     <div class="text-[10px] text-red-400 font-orbitron uppercase">Zelle: ${akte.cell || 'Standard'}</div>
-                                    <div class="text-xs text-gray-300 font-mono">Entlassung: <strong class="text-white">${timeStr} Uhr</strong></div>
+                                    <div class="text-xs text-gray-300 font-mono">Entlassung ab: <strong class="text-white">${timeStr} Uhr</strong></div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-[10px] text-gray-400 font-mono">Restzeit:</div>
-                                    <div class="font-mono font-bold text-sm text-shockRedBright animate-pulse live-timer" data-release="${akte.releaseTime}" data-id="${akte.id}">Berechne...</div>
+                                    <div class="text-[10px] text-gray-400 font-mono">Status:</div>
+                                    <div class="font-mono font-bold text-xs text-shockRedBright animate-pulse live-timer" data-release="${akte.releaseTime}" data-id="${akte.id}">Berechne...</div>
                                 </div>
                             </div>
                         `;
@@ -551,6 +540,8 @@
                     return;
                 }
 
+                const canDelete = currentUserData && currentUserData.level >= 3;
+
                 personNames.forEach(name => {
                     const entries = personGroups[name];
                     const isInhaftiert = entries.some(e => e.status === 'INHAFTIERT');
@@ -560,14 +551,17 @@
                     if (isInhaftiert) statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-red-400 border-red-400/40 bg-red-950/30">INHAFTIERT</span>`;
 
                     const card = document.createElement('div');
-                    card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)] cursor-pointer group';
+                    card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)] cursor-pointer group relative';
                     card.onclick = () => openPersonModal(name);
 
                     card.innerHTML = `
                         <div>
                             <div class="flex justify-between items-start mb-3">
-                                <h3 class="font-orbitron font-bold text-white text-xl truncate group-hover:text-shockRed transition-colors">${name}</h3>
-                                ${statusBadge}
+                                <h3 class="font-orbitron font-bold text-white text-xl truncate group-hover:text-shockRed transition-colors pr-6">${name}</h3>
+                                <div class="flex items-center gap-2">
+                                    ${statusBadge}
+                                    ${canDelete ? `<button onclick="event.stopPropagation(); deleteEntirePerson('${name}')" title="Ganze Person löschen" class="text-red-400 hover:text-red-300 p-1 bg-red-950/30 hover:bg-red-900/50 border border-red-500/30 rounded transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                                </div>
                             </div>
                             <div class="space-y-2 text-xs font-mono text-gray-300">
                                 <p class="text-gray-400"><i data-lucide="file-text" class="w-3.5 h-3.5 inline mr-1 text-shockRed"></i> Einträge: <strong class="text-white">${entries.length}</strong></p>
@@ -586,6 +580,44 @@
             if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         }
 
+        // TIMER LOGIK (NUR ANZEIGE - KEINE AUTOMATISCHE ENTASSUNG MEHR!)
+        function updateTimers() {
+            const timerEls = document.querySelectorAll('.live-timer');
+            const now = new Date().getTime();
+
+            timerEls.forEach(el => {
+                const releaseTime = parseInt(el.getAttribute('data-release'));
+                const diff = releaseTime - now;
+
+                if (diff <= 0) {
+                    el.innerText = 'ZEIT ABGELAUFEN!';
+                    el.classList.remove('text-shockRedBright');
+                    el.classList.add('text-red-500', 'font-black');
+                } else {
+                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+                    el.innerText = `Rest: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} Min`;
+                }
+            });
+        }
+
+        // KANZE PERSON MIT ALLEN EINTRÄGEN LÖSCHEN
+        window.deleteEntirePerson = async function(personName) {
+            if (!confirm(`Möchtest du wirklich die GESAMTE Person "${personName}" und ALLE ihre Akteneinträge unwiderruflich löschen?`)) return;
+
+            const entriesToDelete = cachedAkten.filter(a => (a.target || '').trim().toLowerCase() === personName.trim().toLowerCase());
+            
+            try {
+                for (const item of entriesToDelete) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', item.id));
+                }
+                showToast(`Akte von ${personName} wurde vollständig gelöscht.`);
+            } catch (err) {
+                console.error("Fehler beim Löschen der Person:", err);
+                showToast("Fehler beim Löschen der Person!");
+            }
+        };
+
         // OFFENER FALL DETAIL & CHAT LOGIK
         window.openCaseDetails = function(caseId) {
             selectedCaseId = caseId;
@@ -601,7 +633,6 @@
             document.getElementById('case-detail-type').innerText = c.type || 'ERMITTLUNG';
             document.getElementById('case-detail-level').innerText = `LEVEL ${c.level || 1}`;
 
-            // Aktions Buttons
             const btnArea = document.getElementById('case-action-buttons');
             const canEdit = currentUserData && currentUserData.level >= 2;
             btnArea.innerHTML = canEdit ? `
@@ -702,7 +733,6 @@
             try {
                 const releaseTime = new Date().getTime() + (parseInt(durationMin) * 60 * 1000);
                 
-                // 1. Akte zur Inhaftierung anlegen
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
                     target: c.target,
                     reason: c.crime,
@@ -716,7 +746,6 @@
                     timestamp: new Date().toLocaleDateString('de-DE')
                 });
 
-                // 2. Offenen Fall schließen
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'open_cases', caseId), {
                     status: 'ABGESCHLOSSEN'
                 });
@@ -792,39 +821,11 @@
             if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         };
 
-        function updateTimers() {
-            const timerEls = document.querySelectorAll('.live-timer');
-            const now = new Date().getTime();
-
-            timerEls.forEach(el => {
-                const releaseTime = parseInt(el.getAttribute('data-release'));
-                const akteId = el.getAttribute('data-id');
-                const diff = releaseTime - now;
-
-                if (diff <= 0) {
-                    el.innerText = 'ABGELAUFEN';
-                    el.classList.remove('animate-pulse');
-                    el.classList.add('text-emerald-400');
-                    autoReleaseAkte(akteId);
-                } else {
-                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const secs = Math.floor((diff % (1000 * 60)) / 1000);
-                    el.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} Mins`;
-                }
-            });
-        }
-
-        async function autoReleaseAkte(id) {
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), { status: 'ENTLASSEN' });
-            } catch (err) { console.error(err); }
-        }
-
         window.releaseAkte = async function(id) {
-            if (!confirm("Person freilassen?")) return;
+            if (!confirm("Person freilassen? status wechselt auf ENTLASSEN.")) return;
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), { status: 'ENTLASSEN' });
-                showToast("Freigelassen!");
+                showToast("Subjekt freigelassen!");
             } catch (err) { console.error(err); }
         };
 
@@ -833,7 +834,7 @@
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id));
                 toggleModal('person-akte-modal', false);
-                showToast("Gelöscht!");
+                showToast("Eintrag gelöscht!");
             } catch (err) { console.error(err); }
         };
 
