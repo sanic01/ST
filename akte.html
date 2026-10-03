@@ -76,6 +76,14 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-shockRed selection:text-white">
 
+    <div id="auth-loading-screen" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
+        <div class="w-16 h-16 bg-shockRed rounded-xl flex items-center justify-center font-orbitron font-black text-white text-2xl animate-pulse mb-4 red-glow">
+            ST
+        </div>
+        <p class="font-orbitron text-sm text-white tracking-widest uppercase">Initialisiere Akten-Terminal...</p>
+        <p class="text-xs text-red-400 font-mono mt-2">Prüfe Sicherheitsfreigabe...</p>
+    </div>
+
     <header class="bg-republicPanel/90 backdrop-blur border-b-2 border-shockRed/40 sticky top-0 z-40 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
@@ -97,6 +105,7 @@
                     </div>
                 </div>
 
+                <!-- User Profile Display -->
                 <div class="relative group cursor-pointer py-2 shrink-0">
                     <div class="flex items-center gap-2.5 bg-black/60 border border-shockRed/40 px-3 py-1.5 rounded-lg red-glow">
                         <div class="flex flex-col items-end min-w-0">
@@ -111,6 +120,11 @@
             </div>
         </div>
     </header>
+
+    <div id="toast-notification" class="hidden fixed top-24 right-6 z-50 bg-republicPanel border-2 border-shockRed px-4 py-3 rounded-xl shadow-2xl red-glow flex items-center gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-shockRed"></i>
+        <span id="toast-message" class="text-xs font-mono text-white">Aktion erfolgreich.</span>
+    </div>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 red-border-glow">
@@ -129,11 +143,13 @@
                 </div>
             </div>
 
+            <!-- Search Field -->
             <div class="relative mb-6">
                 <i data-lucide="search" class="absolute left-3.5 top-3 w-5 h-5 text-gray-500"></i>
                 <input type="text" id="akten-search-input" onkeyup="filterAktenList()" placeholder="Nach Name, Klon-ID oder Vergehen suchen..." class="w-full bg-black/70 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none font-mono">
             </div>
 
+            <!-- Akten Container -->
             <div id="akten-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <p class="text-sm text-gray-500 font-mono italic col-span-full">Lade Akten-Datenbank...</p>
             </div>
@@ -151,20 +167,20 @@
             <form onsubmit="handleAddAkte(event)" class="space-y-4">
                 <div>
                     <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Klon / Zivilist</label>
-                    <input type="text" id="akte-target" required placeholder="z. B. CT-5555 Fives oder Kopfgeldjäger" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                    <input type="text" id="akte-target" required placeholder="z. B. CT-5555 Fives oder Kopfgeldjäger" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
                 </div>
                 <div>
                     <label class="block font-orbitron text-xs text-gray-400 mb-1">Vergehen / Vorfall</label>
-                    <input type="text" id="akte-reason" required placeholder="z. B. §2 Unerlaubter Waffenbesitz" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                    <input type="text" id="akte-reason" required placeholder="z. B. §2 Unerlaubter Waffenbesitz" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-orbitron text-xs text-gray-400 mb-1">Haftzeit / Strafe</label>
-                        <input type="text" id="akte-penalty" required placeholder="z. B. 10 Minuten / Bußgeld" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                        <input type="text" id="akte-penalty" required placeholder="z. B. 10 Minuten / Bußgeld" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
                     </div>
                     <div>
                         <label class="block font-orbitron text-xs text-gray-400 mb-1">Aktivitäts-Status</label>
-                        <select id="akte-status" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono">
+                        <select id="akte-status" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
                             <option value="INHAFTIERT">INHAFTIERT</option>
                             <option value="GESUCHT">GESUCHT</option>
                             <option value="ENTLASSEN">ENTLASSEN</option>
@@ -173,10 +189,10 @@
                 </div>
                 <div>
                     <label class="block font-orbitron text-xs text-gray-400 mb-1">Details &amp; Vermerk</label>
-                    <textarea id="akte-notes" rows="3" placeholder="Zusätzliche Bemerkungen..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono"></textarea>
+                    <textarea id="akte-notes" rows="3" placeholder="Zusätzliche Bemerkungen..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none"></textarea>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="toggleAktenModal(false)" class="px-4 py-2 bg-gray-800 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
+                    <button type="button" onclick="toggleAktenModal(false)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
                     <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Akte Speichern</button>
                 </div>
             </form>
@@ -214,6 +230,7 @@
         let cachedAkten = [];
 
         onAuthStateChanged(auth, async (user) => {
+            const loader = document.getElementById('auth-loading-screen');
             if (user) {
                 const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_profiles', user.uid);
                 onSnapshot(userDocRef, (snap) => {
@@ -230,12 +247,28 @@
                     }
                     updateProfileUI();
                     startAktenRealtimeListener();
+                    if (loader) loader.classList.add('hidden');
+                }, (err) => {
+                    console.error("Fehler beim Laden des Benutzerprofils:", err);
+                    if (loader) loader.classList.add('hidden');
                 });
             } else {
-                // Bei nicht angemeldetem Benutzer zurück zur Hauptseite leiten
-                window.location.href = "index.html";
+                // Safely handle redirection without throwing SyntaxError in preview/iframe environments
+                setTimeout(() => {
+                    if (!auth.currentUser) {
+                        try {
+                            if (window.location && window.location.protocol && window.location.protocol.startsWith('http')) {
+                                window.location.href = "index.html";
+                            }
+                        } catch (e) {
+                            console.warn("Navigation safely bypassed in preview environment:", e);
+                        }
+                    }
+                }, 1200);
             }
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
         });
 
         function updateProfileUI() {
@@ -243,11 +276,14 @@
             const displayName = currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Trooper';
             
             document.getElementById('user-display-name').innerText = displayName;
-            document.getElementById('user-display-level').innerText = `SICHERHEITSSTUFE ${level}`;
+            document.getElementById('user-display-level').innerText = `STUFE ${level}`;
 
             const aktenControls = document.getElementById('akten-edit-controls');
-            if (level >= 2) aktenControls.classList.remove('hidden');
-            else aktenControls.classList.add('hidden');
+            if (level >= 2) {
+                aktenControls.classList.remove('hidden');
+            } else {
+                aktenControls.classList.add('hidden');
+            }
         }
 
         function startAktenRealtimeListener() {
@@ -294,7 +330,9 @@
                 `;
                 container.appendChild(card);
             });
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
         }
 
         window.filterAktenList = function() {
@@ -322,21 +360,25 @@
                     penalty,
                     status,
                     notes,
-                    author: currentUserData ? (currentUserData.klonId || currentUserData.email) : 'Unbekannt',
+                    author: currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Unbekannt',
                     timestamp: new Date().toLocaleDateString('de-DE')
                 });
                 toggleAktenModal(false);
                 e.target.reset();
+                showToast("Akte erfolgreich in der Datenbank gespeichert!");
             } catch (err) {
                 console.error("Fehler beim Speichern der Akte:", err);
+                showToast("Fehler beim Speichern der Akte!");
             }
         };
 
         window.deleteAkte = async function(id) {
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id));
+                showToast("Akte wurde aus der Datenbank entfernt.");
             } catch (err) {
                 console.error("Fehler beim Löschen der Akte:", err);
+                showToast("Fehler beim Löschen!");
             }
         };
 
@@ -345,6 +387,16 @@
             if (show) modal.classList.remove('hidden');
             else modal.classList.add('hidden');
         };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            const msgEl = document.getElementById('toast-message');
+            if (toast && msgEl) {
+                msgEl.innerText = msg;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+        }
     </script>
 </body>
 </html>
