@@ -156,6 +156,7 @@
         </div>
     </main>
 
+    <!-- Modal: Neue Akte Anlegen -->
     <div id="akten-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow">
             <div class="flex justify-between items-center mb-4">
@@ -196,6 +197,42 @@
                     <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Akte Speichern</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal: Akten Detail-Ansicht -->
+    <div id="akte-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-lg w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-start mb-4 border-b border-republicBorder/60 pb-3">
+                <div>
+                    <span id="detail-akte-status" class="text-[10px] font-mono border px-2 py-0.5 rounded uppercase">STATUS</span>
+                    <h3 id="detail-akte-target" class="font-orbitron font-bold text-2xl text-white mt-1 break-words">Name der Person</h3>
+                </div>
+                <button onclick="toggleDetailModal(false)" class="text-gray-400 hover:text-white p-1"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div class="space-y-4 text-sm font-mono overflow-y-auto pr-1 flex-grow">
+                <div>
+                    <span class="text-gray-500 text-xs block font-orbitron uppercase">Vergehen / Delikt:</span>
+                    <p id="detail-akte-reason" class="text-white mt-0.5 break-words bg-black/40 p-2.5 rounded border border-republicBorder/40"></p>
+                </div>
+                <div>
+                    <span class="text-gray-500 text-xs block font-orbitron uppercase">Strafe / Haftzeit:</span>
+                    <p id="detail-akte-penalty" class="text-white mt-0.5 break-words bg-black/40 p-2.5 rounded border border-republicBorder/40"></p>
+                </div>
+                <div>
+                    <span class="text-gray-500 text-xs block font-orbitron uppercase">Details &amp; Vermerk:</span>
+                    <div id="detail-akte-notes" class="text-gray-300 mt-0.5 break-words bg-black/40 p-3 rounded border border-republicBorder/40 whitespace-pre-wrap min-h-[80px]"></div>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-500 pt-2">
+                    <span>Erfasst von: <strong id="detail-akte-author" class="text-gray-300">Unbekannt</strong></span>
+                    <span id="detail-akte-date">--.--.----</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-6 pt-3 border-t border-republicBorder/60">
+                <button onclick="toggleDetailModal(false)" class="px-5 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded-lg text-xs uppercase tracking-wider red-glow">Schließen</button>
+            </div>
         </div>
     </div>
 
@@ -253,7 +290,6 @@
                     if (loader) loader.classList.add('hidden');
                 });
             } else {
-                // Safely handle redirection without throwing SyntaxError in preview/iframe environments
                 setTimeout(() => {
                     if (!auth.currentUser) {
                         try {
@@ -310,22 +346,29 @@
                 if (akte.status === 'ENTLASSEN') statusColor = 'text-emerald-400 border-emerald-400/40 bg-emerald-950/30';
 
                 const card = document.createElement('div');
-                card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)]';
+                card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)] cursor-pointer group';
+                
+                // Klick öffnet Detail-Modal
+                card.onclick = () => openAkteDetails(akte);
+
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-orbitron font-bold text-white text-lg truncate">${akte.target}</h3>
+                            <h3 class="font-orbitron font-bold text-white text-lg truncate group-hover:text-shockRed transition-colors">${akte.target}</h3>
                             <span class="text-[10px] font-mono border px-2 py-0.5 rounded ${statusColor}">${akte.status}</span>
                         </div>
                         <div class="space-y-2 text-xs font-mono text-gray-300 mb-4">
-                            <p class="break-words"><span class="text-gray-500">Vergehen:</span> ${akte.reason}</p>
-                            <p class="break-words"><span class="text-gray-500">Strafe/Haft:</span> ${akte.penalty}</p>
-                            ${akte.notes ? `<p class="text-gray-400 italic text-[11px] pt-1 border-t border-republicBorder/40 break-words">"${akte.notes}"</p>` : ''}
+                            <p class="truncate"><span class="text-gray-500">Vergehen:</span> ${akte.reason}</p>
+                            <p class="truncate"><span class="text-gray-500">Strafe/Haft:</span> ${akte.penalty}</p>
+                            ${akte.notes ? `<p class="text-gray-400 italic text-[11px] pt-1 border-t border-republicBorder/40 break-words line-clamp-2">"${akte.notes}"</p>` : ''}
                         </div>
                     </div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-3 border-t border-republicBorder/40">
                         <span>Offizier: ${akte.author || 'Unbekannt'}</span>
-                        ${canDelete ? `<button onclick="deleteAkte('${akte.id}')" class="text-red-400 hover:text-red-300 flex items-center gap-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Löschen</button>` : ''}
+                        <div class="flex items-center gap-2">
+                            <span class="text-shockRed/80 hover:text-shockRed font-bold flex items-center gap-0.5"><i data-lucide="maximize-2" class="w-3 h-3"></i> Öffnen</span>
+                            ${canDelete ? `<button onclick="event.stopPropagation(); deleteAkte('${akte.id}')" class="text-red-400 hover:text-red-300 flex items-center gap-1 ml-2"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                        </div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -334,6 +377,31 @@
                 lucide.createIcons();
             }
         }
+
+        window.openAkteDetails = function(akte) {
+            document.getElementById('detail-akte-target').innerText = akte.target || 'Kein Name';
+            document.getElementById('detail-akte-reason').innerText = akte.reason || 'Keine Angabe';
+            document.getElementById('detail-akte-penalty').innerText = akte.penalty || 'Keine Angabe';
+            document.getElementById('detail-akte-notes').innerText = akte.notes || 'Keine zusätzlichen Anmerkungen vorhanden.';
+            document.getElementById('detail-akte-author').innerText = akte.author || 'Unbekannt';
+            document.getElementById('detail-akte-date').innerText = akte.timestamp || '';
+
+            const statusEl = document.getElementById('detail-akte-status');
+            statusEl.innerText = akte.status || 'UNBEKANNT';
+            statusEl.className = 'text-[10px] font-mono border px-2 py-0.5 rounded uppercase ';
+            
+            if (akte.status === 'INHAFTIERT') statusEl.className += 'text-red-400 border-red-400/40 bg-red-950/30';
+            else if (akte.status === 'ENTLASSEN') statusEl.className += 'text-emerald-400 border-emerald-400/40 bg-emerald-950/30';
+            else statusEl.className += 'text-amber-400 border-amber-400/40 bg-amber-950/30';
+
+            toggleDetailModal(true);
+        };
+
+        window.toggleDetailModal = function(show) {
+            const modal = document.getElementById('akte-detail-modal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        };
 
         window.filterAktenList = function() {
             const query = document.getElementById('akten-search-input').value.toLowerCase();
