@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klon Guard - Akten & Haft-Terminal</title>
+    <title>Klon Guard - Terminal</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Rajdhani & Orbitron -->
@@ -57,7 +57,6 @@
             text-shadow: 0 0 12px rgba(230, 28, 28, 0.9), 0 0 25px rgba(230, 28, 28, 0.5);
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -123,20 +122,23 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         <div class="bg-republicPanel border border-republicBorder rounded-xl p-6 red-border-glow">
             
-            <!-- Tab Navigation & Action Button -->
+            <!-- Navigation Reiter -->
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6 pb-4 border-b border-republicBorder">
-                <div class="flex items-center gap-3">
-                    <button id="tab-btn-open" onclick="switchTab('open')" class="px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-shockRed bg-shockRed text-white red-glow">
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <button id="tab-btn-cases" onclick="switchTab('cases')" class="px-4 py-2 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-shockRed bg-shockRed text-white red-glow">
+                        <i data-lucide="shield-alert" class="w-4 h-4"></i> Offene Fälle
+                    </button>
+                    <button id="tab-btn-open" onclick="switchTab('open')" class="px-4 py-2 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white">
                         <i data-lucide="lock" class="w-4 h-4"></i> Inhaftiert
                     </button>
-                    <button id="tab-btn-archive" onclick="switchTab('archive')" class="px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white">
+                    <button id="tab-btn-archive" onclick="switchTab('archive')" class="px-4 py-2 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white">
                         <i data-lucide="users" class="w-4 h-4"></i> Akten
                     </button>
                 </div>
 
                 <div id="akten-edit-controls" class="hidden">
-                    <button onclick="toggleAktenModal(true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2.5 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
-                        <i data-lucide="file-plus" class="w-4 h-4"></i> Neuen Eintrag Erstellen
+                    <button onclick="toggleModal('create-case-modal', true)" class="bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold px-4 py-2 rounded-lg text-xs uppercase flex items-center gap-2 transition red-glow">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Neuland / Fall Eröffnen
                     </button>
                 </div>
             </div>
@@ -144,106 +146,178 @@
             <!-- Search Field -->
             <div class="relative mb-6">
                 <i data-lucide="search" class="absolute left-3.5 top-3 w-5 h-5 text-gray-500"></i>
-                <input type="text" id="akten-search-input" onkeyup="filterAktenList()" placeholder="Nach Name, Klon-ID oder Vergehen suchen..." class="w-full bg-black/70 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none font-mono">
+                <input type="text" id="akten-search-input" onkeyup="filterList()" placeholder="Suchen nach Zielperson, Vergehen, Zeugen..." class="w-full bg-black/70 border border-republicBorder focus:border-shockRed rounded-lg py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none font-mono">
             </div>
 
-            <!-- Akten / Personen Container -->
+            <!-- Container für Karten -->
             <div id="akten-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <p class="text-sm text-gray-500 font-mono italic col-span-full">Lade Datenbank...</p>
             </div>
         </div>
     </main>
 
-    <!-- Modal: Neuen Eintrag / Akte Anlegen -->
-    <div id="akten-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow">
-            <div class="flex justify-between items-center mb-4">
+    <!-- Modal: Neuer Offener Fall -->
+    <div id="create-case-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-lg w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-republicBorder pb-3">
                 <h3 class="font-orbitron font-bold text-xl text-white flex items-center gap-2">
-                    <i data-lucide="file-text" class="text-shockRed"></i> Akteneintrag Erstellen
+                    <i data-lucide="shield-alert" class="text-shockRed"></i> Offenen Fall Eröffnen
                 </h3>
-                <button onclick="toggleAktenModal(false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+                <button onclick="toggleModal('create-case-modal', false)" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
             </div>
-            <form onsubmit="handleAddAkte(event)" class="space-y-4">
+            <form onsubmit="handleCreateCase(event)" class="space-y-4 font-mono">
                 <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Klon / Zivilist</label>
-                    <input type="text" id="akte-target" required placeholder="z. B. CT-5555 Fives" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zielperson / Verdächtiger</label>
+                    <input type="text" id="case-target" required placeholder="z. B. Unbekannter Kopfgeldjäger oder CT-9999" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
                 </div>
-                <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Vergehen / Grund des Eintrags</label>
-                    <input type="text" id="akte-reason" required placeholder="z. B. §2 Unerlaubter Waffenbesitz" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
-                </div>
+                
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Status</label>
-                        <select id="akte-status" onchange="toggleHaftzeitInput()" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
-                            <option value="INHAFTIERT">INHAFTIERT</option>
-                            <option value="AKTE">NORMALER EINTRAG</option>
-                            <option value="GESUCHT">GESUCHT</option>
+                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Fall-Typ</label>
+                        <select id="case-type" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
+                            <option value="ERMITTLUNG">ERMITTLUNG</option>
+                            <option value="FESTNAHME">FESTNAHMEBEFEHL</option>
                         </select>
                     </div>
-                    <div id="haftzeit-wrapper">
-                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Haftzeit (in Min.)</label>
-                        <input type="number" id="akte-duration-min" min="1" max="300" value="10" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
+                    <div>
+                        <label class="block font-orbitron text-xs text-gray-400 mb-1">Straftaten Level</label>
+                        <select id="case-level" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
+                            <option value="1">Level 1 (Geringfügig)</option>
+                            <option value="2">Level 2 (Mittel)</option>
+                            <option value="3">Level 3 (Schwer)</option>
+                            <option value="4">Level 4 (Hochrisiko)</option>
+                            <option value="5" selected>Level 5 (Staatsgefährdend)</option>
+                        </select>
                     </div>
                 </div>
-                <div id="zelle-wrapper">
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zelle / Block (optional)</label>
-                    <input type="text" id="akte-cell" placeholder="z. B. Zelle A-12" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none">
-                </div>
+
                 <div>
-                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Details &amp; Vermerk</label>
-                    <textarea id="akte-notes" rows="3" placeholder="Zusätzliche Bemerkungen..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm font-mono focus:border-shockRed focus:outline-none"></textarea>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Straftat / Anschuldigung</label>
+                    <input type="text" id="case-crime" required placeholder="z. B. §12 Hochverrat / Sabotage am Reaktor" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
                 </div>
+
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Zeugen (Kommagetrennt)</label>
+                    <input type="text" id="case-witnesses" placeholder="z. B. CT-1111, Zivilist Binks" class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-orbitron text-xs text-gray-400 mb-1">Erst-Sachverhalt / Ermittlungsansatz</label>
+                    <textarea id="case-notes" rows="3" placeholder="Sichtungsort, Beweismittel, Tathergang..." class="w-full bg-black/70 border border-republicBorder rounded p-2 text-white text-sm focus:border-shockRed focus:outline-none"></textarea>
+                </div>
+
                 <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="toggleAktenModal(false)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Eintrag Speichern</button>
+                    <button type="button" onclick="toggleModal('create-case-modal', false)" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded font-orbitron text-xs">Abbrechen</button>
+                    <button type="submit" class="px-4 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded text-xs red-glow">Fall Anlegen</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Personen-Akte mit allen Einträgen -->
-    <div id="person-akte-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="max-w-2xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-start mb-4 border-b border-republicBorder/60 pb-3">
+    <!-- Modal: Offener Fall Detail & Live Chat Dossier -->
+    <div id="case-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-3xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-start border-b border-republicBorder pb-3">
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-mono border px-2 py-0.5 rounded uppercase border-shockRed/40 bg-shockRed/10 text-shockRedBright font-bold">AKTEN-DOSSIER</span>
-                        <span id="person-modal-status" class="text-[10px] font-mono border px-2 py-0.5 rounded uppercase">--</span>
+                        <span id="case-detail-type" class="text-[10px] border px-2 py-0.5 rounded font-bold uppercase">--</span>
+                        <span id="case-detail-level" class="text-[10px] border px-2 py-0.5 rounded font-bold uppercase">LEVEL -</span>
                     </div>
-                    <h3 id="person-modal-target" class="font-orbitron font-bold text-3xl text-white mt-1 break-words">Name der Person</h3>
+                    <h3 id="case-detail-target" class="font-orbitron font-bold text-2xl text-white mt-1">Zielperson</h3>
                 </div>
-                <button onclick="togglePersonModal(false)" class="text-gray-400 hover:text-white p-1"><i data-lucide="x"></i></button>
+                <button onclick="toggleModal('case-detail-modal', false)" class="text-gray-400 hover:text-white p-1"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4 flex-grow overflow-hidden">
+                <!-- Linke Spalte: Details & Zeugen -->
+                <div class="md:col-span-1 space-y-3 overflow-y-auto pr-1 border-r border-republicBorder/50">
+                    <div>
+                        <span class="text-[10px] font-orbitron text-gray-500 uppercase block">Straftat:</span>
+                        <p id="case-detail-crime" class="text-xs text-white font-bold bg-black/40 p-2 rounded border border-republicBorder/40"></p>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] font-orbitron text-gray-500 uppercase block">Zeugen:</span>
+                        <div id="case-detail-witnesses" class="text-xs text-gray-300 bg-black/40 p-2 rounded border border-republicBorder/40">Keine Zeugen angegeben</div>
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 pt-2 border-t border-republicBorder/40">
+                        <p>Erstellt von: <strong id="case-detail-author" class="text-gray-300">--</strong></p>
+                        <p>Datum: <span id="case-detail-date">--</span></p>
+                    </div>
+
+                    <div id="case-action-buttons" class="pt-2 space-y-2">
+                        <!-- Buttons zum Festnehmen / Abschließen -->
+                    </div>
+                </div>
+
+                <!-- Rechte Spalte: Live Chat & Ermittlungs-Verlauf -->
+                <div class="md:col-span-2 flex flex-col h-full bg-black/50 border border-republicBorder rounded-xl p-3">
+                    <span class="text-xs font-orbitron text-shockRed font-bold border-b border-republicBorder pb-1 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="messages-square" class="w-3.5 h-3.5"></i> Ermittlungs-Protokoll & Chat
+                    </span>
+
+                    <!-- Nachrichten Stream -->
+                    <div id="case-chat-messages" class="flex-grow overflow-y-auto space-y-2.5 pr-2 mb-3 min-h-[180px]">
+                        <!-- Chat Nachrichten -->
+                    </div>
+
+                    <!-- Chat Eingabefeld -->
+                    <form onsubmit="handleSendCaseComment(event)" class="flex gap-2">
+                        <input type="text" id="case-chat-input" placeholder="Anmerkung / Beweis einfügen..." required class="flex-grow bg-black/70 border border-republicBorder focus:border-shockRed rounded p-2 text-xs text-white focus:outline-none">
+                        <button type="submit" class="bg-shockRed hover:bg-shockRedBright text-white px-3 py-2 rounded text-xs font-orbitron font-bold red-glow flex items-center justify-center">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-3 border-t border-republicBorder">
+                <button onclick="toggleModal('case-detail-modal', false)" class="px-5 py-1.5 bg-gray-800 hover:bg-gray-700 text-white font-orbitron rounded text-xs">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Person/Akte Modal (Gewohnt) -->
+    <div id="person-akte-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full bg-republicPanel border-2 border-shockRed rounded-2xl p-6 red-glow max-h-[90vh] flex flex-col font-mono">
+            <div class="flex justify-between items-start mb-4 border-b border-republicBorder pb-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] border px-2 py-0.5 rounded uppercase border-shockRed/40 bg-shockRed/10 text-shockRedBright font-bold">AKTEN-DOSSIER</span>
+                        <span id="person-modal-status" class="text-[10px] border px-2 py-0.5 rounded uppercase">--</span>
+                    </div>
+                    <h3 id="person-modal-target" class="font-orbitron font-bold text-3xl text-white mt-1">Name der Person</h3>
+                </div>
+                <button onclick="toggleModal('person-akte-modal', false)" class="text-gray-400 hover:text-white p-1"><i data-lucide="x"></i></button>
             </div>
             
-            <div class="mb-2 flex justify-between items-center text-xs font-mono text-gray-400">
-                <span>Registrierte Eintrags-Historie:</span>
+            <div class="mb-2 flex justify-between items-center text-xs text-gray-400">
+                <span>Eintrags-Historie:</span>
                 <span id="person-modal-count" class="text-white font-bold">0 Einträge</span>
             </div>
 
-            <!-- Scrollbarer Bereich für Eintrags-Liste -->
-            <div id="person-modal-entries" class="space-y-4 overflow-y-auto pr-2 flex-grow my-2">
-                <!-- Einträge werden dynamisch eingefügt -->
-            </div>
+            <div id="person-modal-entries" class="space-y-4 overflow-y-auto pr-2 flex-grow my-2"></div>
 
-            <div class="flex justify-end mt-4 pt-3 border-t border-republicBorder/60">
-                <button onclick="togglePersonModal(false)" class="px-5 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded-lg text-xs uppercase tracking-wider red-glow">Schließen</button>
+            <div class="flex justify-end mt-4 pt-3 border-t border-republicBorder">
+                <button onclick="toggleModal('person-akte-modal', false)" class="px-5 py-2 bg-shockRed hover:bg-shockRedBright text-white font-orbitron font-bold rounded-lg text-xs uppercase red-glow">Schließen</button>
             </div>
         </div>
     </div>
 
     <footer class="bg-republicPanel border-t border-shockRed/30 py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400">
-            <p class="font-orbitron text-gray-300">Klon Guard — Akten-Terminal der Großen Armee der Republik</p>
+            <p class="font-orbitron text-gray-300">Klon Guard — Terminal der Großen Armee der Republik</p>
         </div>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAp3If3RjAzS4gG8sfKiwhnBgCOmXsGiEo",
             authDomain: "klon-guard.firebaseapp.com",
@@ -261,7 +335,9 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'klon-guard-swrp';
         let currentUserData = null;
         let cachedAkten = [];
-        let activeTab = 'open'; // 'open' (Inhaftiert) oder 'archive' (Akten Personen-Übersicht)
+        let cachedCases = [];
+        let activeTab = 'cases'; // 'cases' (Offene Fälle), 'open' (Inhaftiert), 'archive' (Akten)
+        let selectedCaseId = null;
         let timerInterval = null;
 
         onAuthStateChanged(auth, async (user) => {
@@ -281,27 +357,15 @@
                         };
                     }
                     updateProfileUI();
-                    startAktenRealtimeListener();
-                    if (loader) loader.classList.add('hidden');
-                }, (err) => {
-                    console.error("Fehler beim Laden des Benutzerprofils:", err);
+                    startRealtimeListeners();
                     if (loader) loader.classList.add('hidden');
                 });
             } else {
                 setTimeout(() => {
-                    if (!auth.currentUser) {
-                        try {
-                            if (window.location && window.location.protocol && window.location.protocol.startsWith('http')) {
-                                window.location.href = "index.html";
-                            }
-                        } catch (e) {
-                            console.warn("Navigation safely bypassed in preview environment:", e);
-                        }
+                    if (!auth.currentUser && window.location.protocol.startsWith('http')) {
+                        window.location.href = "index.html";
                     }
                 }, 1200);
-            }
-            if (window.lucide && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
             }
         });
 
@@ -312,55 +376,105 @@
             document.getElementById('user-display-name').innerText = displayName;
             document.getElementById('user-display-level').innerText = `STUFE ${level}`;
 
-            const aktenControls = document.getElementById('akten-edit-controls');
-            if (level >= 2) {
-                aktenControls.classList.remove('hidden');
-            } else {
-                aktenControls.classList.add('hidden');
-            }
+            const controls = document.getElementById('akten-edit-controls');
+            if (level >= 2) controls.classList.remove('hidden');
+            else controls.classList.add('hidden');
         }
 
-        function startAktenRealtimeListener() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), (snapshot) => {
+        function startRealtimeListeners() {
+            // Listen Akten
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), (snap) => {
                 cachedAkten = [];
-                snapshot.forEach(doc => cachedAkten.push({ id: doc.id, ...doc.data() }));
-                renderAkten();
-            }, err => console.error("Firestore Akten Error:", err));
+                snap.forEach(d => cachedAkten.push({ id: d.id, ...d.data() }));
+                renderList();
+            });
+
+            // Listen Offene Fälle
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'open_cases'), (snap) => {
+                cachedCases = [];
+                snap.forEach(d => cachedCases.push({ id: d.id, ...d.data() }));
+                renderList();
+                if (selectedCaseId) {
+                    const currentCase = cachedCases.find(c => c.id === selectedCaseId);
+                    if (currentCase) renderCaseChat(currentCase);
+                }
+            });
 
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                if (activeTab === 'open') {
-                    updateTimers();
-                }
+                if (activeTab === 'open') updateTimers();
             }, 1000);
         }
 
         window.switchTab = function(tab) {
             activeTab = tab;
+            const btnCases = document.getElementById('tab-btn-cases');
             const btnOpen = document.getElementById('tab-btn-open');
             const btnArchive = document.getElementById('tab-btn-archive');
 
-            if (tab === 'open') {
-                btnOpen.className = 'px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-shockRed bg-shockRed text-white red-glow';
-                btnArchive.className = 'px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white';
-            } else {
-                btnArchive.className = 'px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-shockRed bg-shockRed text-white red-glow';
-                btnOpen.className = 'px-5 py-2.5 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white';
-            }
-            renderAkten();
+            const activeClass = 'px-4 py-2 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-shockRed bg-shockRed text-white red-glow';
+            const inactiveClass = 'px-4 py-2 rounded-lg font-orbitron font-bold text-xs uppercase flex items-center gap-2 transition border border-republicBorder bg-black/40 text-gray-400 hover:text-white';
+
+            btnCases.className = tab === 'cases' ? activeClass : inactiveClass;
+            btnOpen.className = tab === 'open' ? activeClass : inactiveClass;
+            btnArchive.className = tab === 'archive' ? activeClass : inactiveClass;
+
+            renderList();
         };
 
-        function renderAkten() {
+        function renderList() {
             const container = document.getElementById('akten-list-container');
             container.innerHTML = '';
             const query = (document.getElementById('akten-search-input').value || '').toLowerCase();
 
-            if (activeTab === 'open') {
-                // ANZEIGE: INHAFTIERT (Gefängnisansicht)
+            if (activeTab === 'cases') {
+                // OFFENE FÄLLE
+                let list = cachedCases.filter(c => c.status === 'OFFEN' && (
+                    (c.target && c.target.toLowerCase().includes(query)) ||
+                    (c.crime && c.crime.toLowerCase().includes(query)) ||
+                    (c.witnesses && c.witnesses.toLowerCase().includes(query))
+                ));
+
+                if (list.length === 0) {
+                    container.innerHTML = `<p class="text-sm text-gray-500 font-mono italic col-span-full">Derzeit keine offenen Fälle / Ermittlungen registriert.</p>`;
+                    return;
+                }
+
+                list.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)] cursor-pointer group';
+                    card.onclick = () => openCaseDetails(c.id);
+
+                    let levelBadge = 'text-amber-400 border-amber-400/40 bg-amber-950/30';
+                    if (c.level >= 4) levelBadge = 'text-red-400 border-red-500/50 bg-red-950/40 font-bold';
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-orbitron font-bold text-white text-lg truncate group-hover:text-shockRed transition-colors">${c.target}</h3>
+                                <div class="flex gap-1">
+                                    <span class="text-[9px] font-mono border px-1.5 py-0.5 rounded ${levelBadge}">LEVEL ${c.level}</span>
+                                    <span class="text-[9px] font-mono border px-1.5 py-0.5 rounded text-shockRedBright border-shockRed/40 bg-shockRed/10">${c.type}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 text-xs font-mono text-gray-300">
+                                <p><span class="text-gray-500">Straftat:</span> <strong class="text-white">${c.crime}</strong></p>
+                                ${c.witnesses ? `<p class="truncate"><span class="text-gray-500">Zeugen:</span> ${c.witnesses}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-3 border-t border-republicBorder/40 mt-4">
+                            <span>Ermittler: ${c.author || 'Unbekannt'}</span>
+                            <span class="text-shockRed font-orbitron font-bold flex items-center gap-1">Protokoll <i data-lucide="messages-square" class="w-3.5 h-3.5"></i></span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } else if (activeTab === 'open') {
+                // INHAFTIERT
                 let list = cachedAkten.filter(a => a.status === 'INHAFTIERT' && (
                     (a.target && a.target.toLowerCase().includes(query)) ||
-                    (a.reason && a.reason.toLowerCase().includes(query)) ||
-                    (a.notes && a.notes.toLowerCase().includes(query))
+                    (a.reason && a.reason.toLowerCase().includes(query))
                 ));
 
                 if (list.length === 0) {
@@ -419,14 +533,11 @@
                 updateTimers();
 
             } else {
-                // ANZEIGE: AKTEN (Gliedert nach Person!)
+                // AKTEN (NACH PERSON)
                 const personGroups = {};
-
                 cachedAkten.forEach(akte => {
                     const name = (akte.target || 'Unbekannt').trim();
-                    if (!personGroups[name]) {
-                        personGroups[name] = [];
-                    }
+                    if (!personGroups[name]) personGroups[name] = [];
                     personGroups[name].push(akte);
                 });
 
@@ -443,13 +554,10 @@
                 personNames.forEach(name => {
                     const entries = personGroups[name];
                     const isInhaftiert = entries.some(e => e.status === 'INHAFTIERT');
-                    const isGesucht = entries.some(e => e.status === 'GESUCHT');
-
-                    let statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-emerald-400 border-emerald-400/40 bg-emerald-950/30">UNAUFFÄLLIG / ENTLASSEN</span>`;
-                    if (isInhaftiert) statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-red-400 border-red-400/40 bg-red-950/30">INHAFTIERT</span>`;
-                    else if (isGesucht) statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-amber-400 border-amber-400/40 bg-amber-950/30">GESUCHT</span>`;
-
                     const lastEntry = entries[entries.length - 1];
+
+                    let statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-emerald-400 border-emerald-400/40 bg-emerald-950/30">ENTLASSEN / ARCHIV</span>`;
+                    if (isInhaftiert) statusBadge = `<span class="text-[10px] font-mono border px-2 py-0.5 rounded text-red-400 border-red-400/40 bg-red-950/30">INHAFTIERT</span>`;
 
                     const card = document.createElement('div');
                     card.className = 'bg-black/60 border border-republicBorder hover:border-shockRed/60 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_15px_rgba(230,28,28,0.2)] cursor-pointer group';
@@ -462,41 +570,190 @@
                                 ${statusBadge}
                             </div>
                             <div class="space-y-2 text-xs font-mono text-gray-300">
-                                <p class="text-gray-400"><i data-lucide="file-text" class="w-3.5 h-3.5 inline mr-1 text-shockRed"></i> Einträge im Dossier: <strong class="text-white">${entries.length}</strong></p>
+                                <p class="text-gray-400"><i data-lucide="file-text" class="w-3.5 h-3.5 inline mr-1 text-shockRed"></i> Einträge: <strong class="text-white">${entries.length}</strong></p>
                                 <p class="truncate"><span class="text-gray-500">Letzter Vermerk:</span> ${lastEntry.reason || 'Keine Angabe'}</p>
                             </div>
                         </div>
                         <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-3 border-t border-republicBorder/40 mt-4">
-                            <span>Letztes Update: ${lastEntry.timestamp || '--'}</span>
-                            <span class="text-shockRed font-orbitron font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">Akte Öffnen <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
+                            <span>Datum: ${lastEntry.timestamp || '--'}</span>
+                            <span class="text-shockRed font-orbitron font-bold flex items-center gap-1">Dossier <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                         </div>
                     `;
                     container.appendChild(card);
                 });
             }
 
-            if (window.lucide && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
+            if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         }
 
-        // Modal für spezifische Person öffnen (zeigt alle deren Einträge)
+        // OFFENER FALL DETAIL & CHAT LOGIK
+        window.openCaseDetails = function(caseId) {
+            selectedCaseId = caseId;
+            const c = cachedCases.find(item => item.id === caseId);
+            if (!c) return;
+
+            document.getElementById('case-detail-target').innerText = c.target || 'Unbekannt';
+            document.getElementById('case-detail-crime').innerText = c.crime || 'Keine Angabe';
+            document.getElementById('case-detail-witnesses').innerText = c.witnesses || 'Keine Zeugen erfasst';
+            document.getElementById('case-detail-author').innerText = c.author || 'Unbekannt';
+            document.getElementById('case-detail-date').innerText = c.timestamp || '';
+
+            document.getElementById('case-detail-type').innerText = c.type || 'ERMITTLUNG';
+            document.getElementById('case-detail-level').innerText = `LEVEL ${c.level || 1}`;
+
+            // Aktions Buttons
+            const btnArea = document.getElementById('case-action-buttons');
+            const canEdit = currentUserData && currentUserData.level >= 2;
+            btnArea.innerHTML = canEdit ? `
+                <button onclick="closeCaseAndArrest('${c.id}')" class="w-full py-1.5 bg-red-600/30 hover:bg-red-600/60 border border-red-500 text-red-200 rounded font-orbitron text-xs font-bold flex items-center justify-center gap-1"><i data-lucide="lock" class="w-3.5 h-3.5"></i> Festnehmen & Inhaftieren</button>
+                <button onclick="closeCaseOnly('${c.id}')" class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded font-orbitron text-xs flex items-center justify-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Fall Abschließen</button>
+            ` : '';
+
+            renderCaseChat(c);
+            toggleModal('case-detail-modal', true);
+        };
+
+        function renderCaseChat(c) {
+            const chatBox = document.getElementById('case-chat-messages');
+            chatBox.innerHTML = '';
+
+            const comments = c.comments || [];
+            if (comments.length === 0) {
+                chatBox.innerHTML = `<p class="text-[11px] text-gray-500 italic text-center py-4">Keine Anmerkungen vorhanden. Starte die Diskussion...</p>`;
+                return;
+            }
+
+            comments.forEach(msg => {
+                const msgEl = document.createElement('div');
+                msgEl.className = 'bg-black/60 border border-republicBorder/60 p-2 rounded text-xs';
+                msgEl.innerHTML = `
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1 border-b border-republicBorder/30 pb-0.5">
+                        <strong class="text-shockRed">${msg.author}</strong>
+                        <span>${msg.time}</span>
+                    </div>
+                    <p class="text-gray-200 break-words">${msg.text}</p>
+                `;
+                chatBox.appendChild(msgEl);
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        window.handleSendCaseComment = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('case-chat-input');
+            const text = input.value.trim();
+            if (!text || !selectedCaseId) return;
+
+            const author = currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Officer';
+            const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'open_cases', selectedCaseId), {
+                    comments: arrayUnion({ author, text, time })
+                });
+                input.value = '';
+            } catch (err) {
+                console.error("Fehler beim Senden der Anmerkung:", err);
+            }
+        };
+
+        window.handleCreateCase = async function(e) {
+            e.preventDefault();
+            const target = document.getElementById('case-target').value.trim();
+            const type = document.getElementById('case-type').value;
+            const level = parseInt(document.getElementById('case-level').value);
+            const crime = document.getElementById('case-crime').value.trim();
+            const witnesses = document.getElementById('case-witnesses').value.trim();
+            const notes = document.getElementById('case-notes').value.trim();
+
+            const author = currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Unbekannt';
+            const timestamp = new Date().toLocaleDateString('de-DE') + ' ' + new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
+
+            const initialComments = notes ? [{ author, text: `Erstnotiz: ${notes}`, time: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) }] : [];
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'open_cases'), {
+                    target,
+                    type,
+                    level,
+                    crime,
+                    witnesses,
+                    status: 'OFFEN',
+                    author,
+                    timestamp,
+                    comments: initialComments
+                });
+                toggleModal('create-case-modal', false);
+                e.target.reset();
+                showToast("Offener Fall erfolgreich angelegt!");
+            } catch (err) {
+                console.error("Fehler beim Erstellen des Falls:", err);
+            }
+        };
+
+        window.closeCaseAndArrest = async function(caseId) {
+            const c = cachedCases.find(item => item.id === caseId);
+            if (!c) return;
+
+            const durationMin = prompt("Haftzeit in Minuten eingeben:", "10");
+            if (!durationMin) return;
+
+            try {
+                const releaseTime = new Date().getTime() + (parseInt(durationMin) * 60 * 1000);
+                
+                // 1. Akte zur Inhaftierung anlegen
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
+                    target: c.target,
+                    reason: c.crime,
+                    penalty: `${durationMin} Min. Haft`,
+                    status: 'INHAFTIERT',
+                    cell: 'Standard-Zelle',
+                    durationMin: parseInt(durationMin),
+                    releaseTime,
+                    notes: `Überführt aus Offenem Fall (Straftaten Level ${c.level}).`,
+                    author: currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Officer',
+                    timestamp: new Date().toLocaleDateString('de-DE')
+                });
+
+                // 2. Offenen Fall schließen
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'open_cases', caseId), {
+                    status: 'ABGESCHLOSSEN'
+                });
+
+                toggleModal('case-detail-modal', false);
+                showToast("Subjekt inhaftiert & Fall abgeschlossen!");
+            } catch (err) {
+                console.error("Fehler beim Überführen:", err);
+            }
+        };
+
+        window.closeCaseOnly = async function(caseId) {
+            if (!confirm("Fall ohne Inhaftierung als abgeschlossen archivieren?")) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'open_cases', caseId), {
+                    status: 'ABGESCHLOSSEN'
+                });
+                toggleModal('case-detail-modal', false);
+                showToast("Fall wurde geschlossen.");
+            } catch (err) {
+                console.error("Fehler beim Schließen des Falls:", err);
+            }
+        };
+
+        // PERSONEN AKTE MODAL
         window.openPersonModal = function(personName) {
             const entries = cachedAkten.filter(a => (a.target || '').trim().toLowerCase() === personName.trim().toLowerCase());
             
             document.getElementById('person-modal-target').innerText = personName;
-            document.getElementById('person-modal-count').innerText = `${entries.length} ${entries.length === 1 ? 'Eintrag' : 'Einträge'}`;
+            document.getElementById('person-modal-count').innerText = `${entries.length} Einträge`;
 
             const isInhaftiert = entries.some(e => e.status === 'INHAFTIERT');
-            const isGesucht = entries.some(e => e.status === 'GESUCHT');
             const statusEl = document.getElementById('person-modal-status');
 
             if (isInhaftiert) {
                 statusEl.innerText = 'INHAFTIERT';
                 statusEl.className = 'text-[10px] font-mono border px-2 py-0.5 rounded uppercase text-red-400 border-red-400/40 bg-red-950/30';
-            } else if (isGesucht) {
-                statusEl.innerText = 'GESUCHT';
-                statusEl.className = 'text-[10px] font-mono border px-2 py-0.5 rounded uppercase text-amber-400 border-amber-400/40 bg-amber-950/30';
             } else {
                 statusEl.innerText = 'IN FREIHEIT';
                 statusEl.className = 'text-[10px] font-mono border px-2 py-0.5 rounded uppercase text-emerald-400 border-emerald-400/40 bg-emerald-950/30';
@@ -504,30 +761,23 @@
 
             const container = document.getElementById('person-modal-entries');
             container.innerHTML = '';
-
             const canDelete = currentUserData && currentUserData.level >= 3;
 
             entries.forEach((e, idx) => {
                 const entryBox = document.createElement('div');
                 entryBox.className = 'bg-black/50 border border-republicBorder p-4 rounded-xl space-y-2 relative';
 
-                let statusText = e.status || 'AKTE';
-                let statusColor = 'text-gray-400 border-gray-600 bg-gray-900/40';
-                if (e.status === 'INHAFTIERT') statusColor = 'text-red-400 border-red-500/40 bg-red-950/30';
-                if (e.status === 'ENTLASSEN') statusColor = 'text-emerald-400 border-emerald-500/40 bg-emerald-950/30';
-
                 entryBox.innerHTML = `
                     <div class="flex justify-between items-start border-b border-republicBorder/40 pb-2">
                         <span class="text-xs font-orbitron text-shockRed font-bold">Eintrag #${entries.length - idx}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-mono border px-1.5 py-0.5 rounded ${statusColor}">${statusText}</span>
+                            <span class="text-[9px] font-mono border px-1.5 py-0.5 rounded text-gray-400 border-gray-600 bg-gray-900/40">${e.status}</span>
                             ${canDelete ? `<button onclick="deleteAkte('${e.id}')" class="text-red-400 hover:text-red-300 p-0.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
                         </div>
                     </div>
                     <div class="text-xs font-mono space-y-1">
-                        <p><span class="text-gray-500">Grund/Vorfall:</span> <strong class="text-white">${e.reason}</strong></p>
-                        ${e.penalty ? `<p><span class="text-gray-500">Strafe/Haft:</span> ${e.penalty}</p>` : ''}
-                        ${e.cell ? `<p><span class="text-gray-500">Unterbringung:</span> ${e.cell}</p>` : ''}
+                        <p><span class="text-gray-500">Vorfall:</span> <strong class="text-white">${e.reason}</strong></p>
+                        ${e.penalty ? `<p><span class="text-gray-500">Strafe:</span> ${e.penalty}</p>` : ''}
                         ${e.notes ? `<p class="text-gray-300 italic bg-black/40 p-2 rounded mt-1 border border-republicBorder/30 break-words font-mono">"${e.notes}"</p>` : ''}
                     </div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono pt-2">
@@ -538,16 +788,8 @@
                 container.appendChild(entryBox);
             });
 
-            togglePersonModal(true);
-            if (window.lucide && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
-        };
-
-        window.togglePersonModal = function(show) {
-            const modal = document.getElementById('person-akte-modal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
+            toggleModal('person-akte-modal', true);
+            if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         };
 
         function updateTimers() {
@@ -574,98 +816,33 @@
 
         async function autoReleaseAkte(id) {
             try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), {
-                    status: 'ENTLASSEN'
-                });
-            } catch (err) {
-                console.error("Fehler beim Auto-Freilassen:", err);
-            }
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), { status: 'ENTLASSEN' });
+            } catch (err) { console.error(err); }
         }
 
         window.releaseAkte = async function(id) {
-            if (!confirm("Person wirklich vorzeitig aus der Haft entlassen?")) return;
+            if (!confirm("Person freilassen?")) return;
             try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), {
-                    status: 'ENTLASSEN'
-                });
-                showToast("Inhaftierter wurde freigelassen.");
-            } catch (err) {
-                console.error("Fehler beim Freilassen:", err);
-                showToast("Fehler beim Freilassen!");
-            }
-        };
-
-        window.filterAktenList = function() {
-            renderAkten();
-        };
-
-        window.toggleHaftzeitInput = function() {
-            const status = document.getElementById('akte-status').value;
-            const haftWrapper = document.getElementById('haftzeit-wrapper');
-            const zelleWrapper = document.getElementById('zelle-wrapper');
-            if (status === 'INHAFTIERT') {
-                haftWrapper.classList.remove('hidden');
-                zelleWrapper.classList.remove('hidden');
-            } else {
-                haftWrapper.classList.add('hidden');
-            }
-        };
-
-        window.handleAddAkte = async function(e) {
-            e.preventDefault();
-            const target = document.getElementById('akte-target').value.trim();
-            const reason = document.getElementById('akte-reason').value.trim();
-            const status = document.getElementById('akte-status').value;
-            const durationMin = parseInt(document.getElementById('akte-duration-min').value || '10');
-            const cell = document.getElementById('akte-cell').value.trim();
-            const notes = document.getElementById('akte-notes').value.trim();
-
-            let releaseTime = null;
-            let penalty = 'Vermerk / Akte';
-
-            if (status === 'INHAFTIERT') {
-                releaseTime = new Date().getTime() + (durationMin * 60 * 1000);
-                penalty = `${durationMin} Min. Haft`;
-            }
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
-                    target,
-                    reason,
-                    penalty,
-                    status,
-                    cell: cell || '',
-                    durationMin: durationMin || 0,
-                    releaseTime,
-                    notes,
-                    author: currentUserData ? (currentUserData.klonId || currentUserData.email.split('@')[0]) : 'Unbekannt',
-                    timestamp: new Date().toLocaleDateString('de-DE') + ' ' + new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})
-                });
-                toggleAktenModal(false);
-                e.target.reset();
-                showToast(`Eintrag für ${target} gespeichert!`);
-            } catch (err) {
-                console.error("Fehler beim Speichern:", err);
-                showToast("Fehler beim Speichern!");
-            }
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id), { status: 'ENTLASSEN' });
+                showToast("Freigelassen!");
+            } catch (err) { console.error(err); }
         };
 
         window.deleteAkte = async function(id) {
-            if (!confirm("Möchtest du diesen Eintrag wirklich löschen?")) return;
+            if (!confirm("Eintrag löschen?")) return;
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'akten', id));
-                togglePersonModal(false);
-                showToast("Eintrag wurde gelöscht.");
-            } catch (err) {
-                console.error("Fehler beim Löschen:", err);
-                showToast("Fehler beim Löschen!");
-            }
+                toggleModal('person-akte-modal', false);
+                showToast("Gelöscht!");
+            } catch (err) { console.error(err); }
         };
 
-        window.toggleAktenModal = function(show) {
-            const modal = document.getElementById('akten-modal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
+        window.filterList = function() { renderList(); };
+
+        window.toggleModal = function(id, show) {
+            const el = document.getElementById(id);
+            if (show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
         };
 
         function showToast(msg) {
