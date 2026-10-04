@@ -235,12 +235,12 @@
                 <div class="md:col-span-1 space-y-3 overflow-y-auto pr-1 border-r border-republicBorder/50">
                     <div>
                         <span class="text-[10px] font-orbitron text-gray-500 uppercase block">Straftat:</span>
-                        <p id="case-detail-crime" class="text-xs text-white font-bold bg-black/40 p-2 rounded border border-republicBorder/40"></p>
+                        <p id="case-detail-crime" class="text-xs text-white font-bold bg-black/40 p-2 rounded border border-republicBorder/40 break-words"></p>
                     </div>
 
                     <div>
                         <span class="text-[10px] font-orbitron text-gray-500 uppercase block">Zeugen:</span>
-                        <div id="case-detail-witnesses" class="text-xs text-gray-300 bg-black/40 p-2 rounded border border-republicBorder/40">Keine Zeugen angegeben</div>
+                        <div id="case-detail-witnesses" class="text-xs text-gray-300 bg-black/40 p-2 rounded border border-republicBorder/40 break-words">Keine Zeugen angegeben</div>
                     </div>
 
                     <div class="text-[10px] text-gray-500 pt-2 border-t border-republicBorder/40">
@@ -317,7 +317,7 @@
                         <div><span class="text-gray-500">Gefahrenstufe:</span> <strong id="pv-danger" class="text-white">Gering</strong></div>
                         <div class="md:col-span-2 mt-1">
                             <span class="text-gray-500 block mb-1">Akte / Biografische Notizen:</span>
-                            <div id="pv-notes" class="bg-black/40 border border-republicBorder/40 p-2.5 rounded text-gray-300 italic min-h-[40px] whitespace-pre-wrap">Keine zusätzlichen Stammdaten hinterlegt.</div>
+                            <div id="pv-notes" class="bg-black/40 border border-republicBorder/40 p-2.5 rounded text-gray-300 italic min-h-[40px] whitespace-pre-wrap break-words">Keine zusätzlichen Stammdaten hinterlegt.</div>
                         </div>
                     </div>
 
@@ -591,7 +591,8 @@
             } else if (activeTab === 'open') {
                 let list = cachedAkten.filter(a => a.status === 'INHAFTIERT' && (
                     (a.target && a.target.toLowerCase().includes(query)) ||
-                    (a.reason && a.reason.toLowerCase().includes(query))
+                    (a.reason && a.reason.toLowerCase().includes(query)) ||
+                    (a.witnesses && a.witnesses.toLowerCase().includes(query))
                 ));
 
                 if (list.length === 0) {
@@ -634,6 +635,7 @@
                             </div>
                             <div class="space-y-1.5 text-xs font-mono text-gray-300">
                                 <p class="truncate"><span class="text-gray-500">Grund:</span> ${akte.reason}</p>
+                                ${akte.witnesses ? `<p class="truncate"><span class="text-gray-500">Zeugen:</span> ${akte.witnesses}</p>` : ''}
                             </div>
                             ${haftBlock}
                         </div>
@@ -801,6 +803,7 @@
                         </div>
                         <div class="text-xs font-mono space-y-1">
                             <p><span class="text-gray-500">Vorfall / Straftat:</span> <strong class="text-white">${e.reason}</strong></p>
+                            ${e.witnesses ? `<p><span class="text-gray-500">Zeugen:</span> ${e.witnesses}</p>` : ''}
                             ${e.penalty ? `<p><span class="text-gray-500">Strafe:</span> ${e.penalty}</p>` : ''}
                             ${e.notes ? `<p class="text-gray-300 italic bg-black/40 p-2 rounded mt-1 border border-republicBorder/30 break-words font-mono">"${e.notes}"</p>` : ''}
                         </div>
@@ -817,7 +820,7 @@
             if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
         };
 
-        // DRUCK & PDF GENERATOR IM ST- / SENATSDESIGN
+        // DRUCK & PDF GENERATOR IM ST- / SENATSDESIGN (TEXTOVERFLOW & MULTI-PAGE FIX)
         window.generateAktePDF = function() {
             if (!activePersonName) return;
 
@@ -840,11 +843,13 @@
 
             // HTML Element für PDF Rendering dynamisch bauen
             const printElement = document.createElement('div');
-            printElement.style.padding = '30px';
-            printElement.style.backgroundColor = '#0D0F14';
-            printElement.style.color = '#E0E6ED';
+            printElement.style.padding = '25px';
+            printElement.style.backgroundColor = '#080A0E';
+            printElement.style.color = '#C8D1E0';
             printElement.style.fontFamily = 'monospace';
             printElement.style.fontSize = '12px';
+            printElement.style.width = '100%';
+            printElement.style.boxSizing = 'border-box';
 
             let casesHtml = '';
             if (entries.length === 0) {
@@ -852,25 +857,32 @@
             } else {
                 entries.forEach((e, idx) => {
                     casesHtml += `
-                        <div style="margin-bottom: 15px; border: 1px solid #E61C1C; background: #141822; padding: 12px; border-radius: 4px;">
-                            <div style="display: flex; justify-between: space-between; border-bottom: 1px solid #E61C1C; padding-bottom: 5px; margin-bottom: 8px;">
+                        <div style="margin-bottom: 15px; border: 1px solid #E61C1C; background: #141822; padding: 12px; border-radius: 4px; page-break-inside: avoid; box-sizing: border-box;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E61C1C; padding-bottom: 5px; margin-bottom: 8px;">
                                 <strong style="color: #E61C1C; font-size: 13px;">FALL #${entries.length - idx} — VERMERK</strong>
                                 <span style="background: #2A0808; color: #FF4D4D; padding: 2px 6px; border-radius: 3px; font-size: 10px; border: 1px solid #E61C1C;">STATUS: ${e.status || 'ERFASST'}</span>
                             </div>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed;">
                                 <tr>
-                                    <td style="width: 120px; color: #888; padding: 2px 0;">Straftat/Vergehen:</td>
-                                    <td style="color: #FFF; font-weight: bold; padding: 2px 0;">${e.reason || 'Keine Angabe'}</td>
+                                    <td style="width: 120px; color: #888; padding: 3px 0; vertical-align: top;">Straftat/Vergehen:</td>
+                                    <td style="color: #FFF; font-weight: bold; padding: 3px 0; word-break: break-word; white-space: pre-wrap;">${e.reason || 'Keine Angabe'}</td>
                                 </tr>
+                                ${e.witnesses ? `
+                                <tr>
+                                    <td style="color: #888; padding: 3px 0; vertical-align: top;">Zeugen:</td>
+                                    <td style="color: #FFF; padding: 3px 0; word-break: break-word; white-space: pre-wrap;">${e.witnesses}</td>
+                                </tr>` : ''}
                                 ${e.penalty ? `
                                 <tr>
-                                    <td style="color: #888; padding: 2px 0;">Strafmaß/Haft:</td>
-                                    <td style="color: #FFD700; padding: 2px 0;">${e.penalty}</td>
+                                    <td style="color: #888; padding: 3px 0; vertical-align: top;">Strafmaß/Haft:</td>
+                                    <td style="color: #FFD700; padding: 3px 0; word-break: break-word; white-space: pre-wrap;">${e.penalty}</td>
                                 </tr>` : ''}
                                 ${e.notes ? `
                                 <tr>
-                                    <td style="color: #888; padding: 2px 0; vertical-align: top;">Anmerkungen:</td>
-                                    <td style="color: #CCC; font-style: italic; background: #0A0C10; padding: 6px; border-radius: 3px; margin-top: 4px; display: block;">"${e.notes}"</td>
+                                    <td style="color: #888; padding: 3px 0; vertical-align: top;">Anmerkungen:</td>
+                                    <td style="padding: 3px 0;">
+                                        <div style="color: #CCC; font-style: italic; background: #0A0C10; padding: 8px; border-radius: 3px; border: 1px solid #232A3B; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; width: 100%; box-sizing: border-box;">"${e.notes}"</div>
+                                    </td>
                                 </tr>` : ''}
                             </table>
                             <div style="margin-top: 8px; font-size: 9px; color: #666; text-align: right; border-top: 1px solid #222; padding-top: 4px;">
@@ -882,7 +894,7 @@
             }
 
             printElement.innerHTML = `
-                <div style="border: 2px solid #E61C1C; padding: 20px; background: #080A0E; border-radius: 8px;">
+                <div style="border: 2px solid #E61C1C; padding: 20px; background: #080A0E; border-radius: 8px; box-sizing: border-box;">
                     <!-- SENAT HEADER -->
                     <div style="text-align: center; border-bottom: 2px solid #E61C1C; padding-bottom: 15px; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
@@ -890,39 +902,36 @@
                         </div>
                         <h1 style="color: #FFF; font-size: 20px; letter-spacing: 2px; margin: 5px 0 2px 0; font-family: sans-serif; text-transform: uppercase;">GROSSE ARMEE DER REPUBLIK</h1>
                         <h2 style="color: #E61C1C; font-size: 13px; letter-spacing: 3px; margin: 0; font-family: sans-serif; text-transform: uppercase;">CORUSCANT GUARD — KLON GUARD DOSSIER</h2>
-                        <div style="margin-top: 10px; font-size: 9px; color: #FF4D4D; background: #2A0505; border: 1px solid #E61C1C; display: inline-block; padding: 3px 10px; border-radius: 3px; letter-spacing: 1px;">
-                            ST-VERBRAUCHSSICHERE DIENSTSACHE // NUR FÜR BEFUGTES PERSONAL
-                        </div>
                     </div>
 
                     <!-- META INFOS -->
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #222; pb-2;">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 8px;">
                         <div>AKTEN-ID: <strong style="color: #FFF;">ST-DOSSIER-${Math.floor(1000 + Math.random() * 9000)}</strong></div>
                         <div>EXPORTHINWEIS: <strong style="color: #FFF;">${exportDate} UHR</strong></div>
                         <div>AUSGESTELLT VON: <strong style="color: #E61C1C;">${officerName}</strong></div>
                     </div>
 
                     <!-- PERSONEN DETAILS / STAMMDATEN -->
-                    <div style="background: #10141D; border: 1px solid #E61C1C; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                    <div style="background: #10141D; border: 1px solid #E61C1C; border-radius: 5px; padding: 15px; margin-bottom: 20px; page-break-inside: avoid;">
                         <h3 style="color: #E61C1C; font-size: 14px; margin: 0 0 10px 0; border-bottom: 1px solid #222; padding-bottom: 5px; font-family: sans-serif; text-transform: uppercase;">
                             1. PERSONEN-STAMMDATEN
                         </h3>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed;">
                             <tr>
-                                <td style="width: 130px; color: #888; padding: 4px 0;">NAME / SUBJEKT:</td>
-                                <td style="color: #FFF; font-size: 15px; font-weight: bold; font-family: sans-serif; padding: 4px 0;">${activePersonName}</td>
+                                <td style="width: 140px; color: #888; padding: 4px 0;">NAME / SUBJEKT:</td>
+                                <td style="color: #FFF; font-size: 15px; font-weight: bold; font-family: sans-serif; padding: 4px 0; word-break: break-word;">${activePersonName}</td>
                             </tr>
                             <tr>
                                 <td style="color: #888; padding: 4px 0;">SPEZIES:</td>
-                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.species || 'Unbekannt'}</td>
+                                <td style="color: #E0E6ED; padding: 4px 0; word-break: break-word;">${profile.species || 'Unbekannt'}</td>
                             </tr>
                             <tr>
                                 <td style="color: #888; padding: 4px 0;">FRAKTION / HERKUNFT:</td>
-                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.faction || 'Unbekannt'}</td>
+                                <td style="color: #E0E6ED; padding: 4px 0; word-break: break-word;">${profile.faction || 'Unbekannt'}</td>
                             </tr>
                             <tr>
                                 <td style="color: #888; padding: 4px 0;">IDENT-ID / CODE:</td>
-                                <td style="color: #E0E6ED; padding: 4px 0;">${profile.ident || 'N/A'}</td>
+                                <td style="color: #E0E6ED; padding: 4px 0; word-break: break-word;">${profile.ident || 'N/A'}</td>
                             </tr>
                             <tr>
                                 <td style="color: #888; padding: 4px 0;">GEFAHRENSTUFE:</td>
@@ -930,7 +939,9 @@
                             </tr>
                             <tr>
                                 <td style="color: #888; padding: 6px 0; vertical-align: top;">STAMMDATEN NOTIZEN:</td>
-                                <td style="color: #CCC; font-style: italic; background: #0A0C10; padding: 8px; border-radius: 4px; border: 1px solid #1C2333;">${profile.notes || 'Keine Notizen hinterlegt.'}</td>
+                                <td style="padding: 6px 0;">
+                                    <div style="color: #CCC; font-style: italic; background: #0A0C10; padding: 8px; border-radius: 4px; border: 1px solid #1C2333; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; width: 100%; box-sizing: border-box;">${profile.notes || 'Keine Notizen hinterlegt.'}</div>
+                                </td>
                             </tr>
                         </table>
                     </div>
@@ -944,7 +955,7 @@
                     </div>
 
                     <!-- FOOTER / STEMPEL -->
-                    <div style="margin-top: 30px; border-top: 2px solid #E61C1C; padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div style="margin-top: 30px; border-top: 2px solid #E61C1C; padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; page-break-inside: avoid;">
                         <div style="font-size: 8px; color: #666; max-width: 300px;">
                             Dieses Dokument entstammt der Sicherheitsdatenbank der Coruscant Guard. Unbefugte Vervielfältigung oder Weitergabe wird gemäß Militärstrafgesetzbuch der Galaktischen Republik geahndet.
                         </div>
@@ -960,8 +971,9 @@
                 margin:       [8, 8, 8, 8],
                 filename:     `Akte_${activePersonName.replace(/\s+/g, '_')}_ST_Guard.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0D0F14' },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#080A0E' },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             // PDF erstellen und ausführen
@@ -1142,6 +1154,7 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'akten'), {
                     target: c.target,
                     reason: c.crime,
+                    witnesses: c.witnesses || '',
                     penalty: `${durationMin} Min. Haft`,
                     status: 'INHAFTIERT',
                     cell: 'Standard-Zelle',
